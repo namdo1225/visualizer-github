@@ -10,6 +10,7 @@ using System.IO;
 using CredentialManagement;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using GitVisualizer;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace GithubSpace
@@ -101,18 +102,14 @@ namespace GithubSpace
                 return false;
             }
         }
+      
+        /// <summary> Gets or Sets the user code. </summary>
+        public static string? userCode { get; private set; } = null;
+        public static string? deviceCode = null;
 
-        /// <summary>
-        /// Gets or Sets the user code.
-        /// </summary>
-        public static String? userCode { get; private set; }
-        public static String? deviceCode;
-
-        /// <summary>
-        /// Gets or Sets the access token.
-        /// </summary>
-        public static String? accessToken { get; private set; }
-
+        /// <summary> Gets or Sets the access token. </summary>
+        public static string? accessToken { get; private set; } = null;
+      
         /// <summary>
         /// URL for login with code page on github
         /// </summary>
@@ -134,6 +131,9 @@ namespace GithubSpace
 
         private bool rememberUserAccess = false;
 
+        private static readonly int MAX_AUTH_WAIT_DUR = 30;
+        private static double authTryInterval = 1;
+      
         /// <summary>
         /// Gets or Sets the repo list.
         /// </summary>
@@ -202,7 +202,7 @@ namespace GithubSpace
         /// <param name="scope">The scope as a string. "public" for all public repos. "private" for all private repos.
         /// "all" for all user's repos.</param>
         /// <returns>The task object.</returns>
-        public async Task GetRepositories(string scope = "public")
+        public async Task<List<RepositoryRemote>?> ScanReposAsync(string scope = "public")
         {
             // TODO: Format the JSON to make it easier to work in frontend.
             await Task.Run(() => GetRepoList(scope));
@@ -326,7 +326,7 @@ namespace GithubSpace
         /// Read token and user name from storage.
         /// </summary>
         /// <returns>true if members accessToken and username have been set properly. false otherwise.</returns>
-        public bool ReadTokenAndUserName()
+        public bool LoadStoredCredentials()
         {
             accessToken = CredentialStore.GetToken();
             username = CredentialStore.GetUserName();
@@ -399,14 +399,15 @@ namespace GithubSpace
 
             CommonHelper();
             PeriodicTimer timer = new PeriodicTimer(TimeSpan.FromSeconds(interval + 5));
-            int max = 10;
+            int calculatedRetries = 30 / interval;
+            int finalRetries = (calculatedRetries == 1) ? 5 : calculatedRetries;
 
             while (await timer.WaitForNextTickAsync() && max > 0)
             {
                 String status = await SendAuthorizationRequest();
                 if (status != null || status == "denied")
                     break;
-                max--;
+                finalRetries--;
             }
         }
 
@@ -453,7 +454,7 @@ namespace GithubSpace
         /// <param name="scope">The scope as a string. "public" for all public repos. "private" for all private repos.
         /// "all" for all user's repos.</param>
         /// <returns>The result.</returns>
-        private async Task<String> GetRepoList(string scope = "public")
+        private async Task<List<RepositoryRemote>?> GetRepoList(string scope = "public")
         {
             scope = (scope != "private" && scope != "all") ? "public" : scope;
             if (accessToken == null)
@@ -462,28 +463,40 @@ namespace GithubSpace
             int page = 1;
 
             repos = new List<Repo>();
-
+          
+            List<RepositoryRemote> repositoryRemotes = new List<RepositoryRemote>();
             while (true)
             {
                 HttpResponseMessage response = await sharedClient.GetAsync($"{sharedClient.BaseAddress}user/repos?type={scope}&per_page=100&page={page++}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    String content = await response.Content.ReadAsStringAsync();
-                    JArray array = JArray.Parse(content);
-                    int gitEndIndex = 6;
-
-
-                    List<Repo> tempRepo = ((JArray)array).Select(repo => new Repo
-                    {
-                        name = (string)repo["name"],
-                        git_url = ((string)repo["git_url"]).Substring(gitEndIndex),
-                    }).ToList();
-
-
-                    if (tempRepo.Count == 0)
-                        break;
-                    repos.AddRange(tempRepo);
+            string content = await response.Content.ReadAsStringAsync();
+            JArray jRemotesArray = JArray.Parse(content);
+            List<RepositoryRemote> repositoryRemotes = new List<RepositoryRemote>();
+            foreach (JToken jToken in jRemotesArray)
+            {
+                JToken? titleToken = jToken["name"];
+                JToken? cloneUrlHTTPSToken = jToken["git_url"];
+                if (titleToken == null)
+                {
+                    return null;
+                }
+                if (cloneUrlHTTPSToken == null)
+                {
+                    return null;
+                }
+                string title = titleToken.ToString();
+                string cloneURL = cloneUrlHTTPSToken.ToString().Substring(6);
+                string webURL = cloneURL.Substring(0, cloneURL.Length - 4);
+                webURL = $"https://{webURL}";
+                RepositoryRemote remote = new RepositoryRemote(title, cloneURL, webURL);
+                Debug.WriteLine($"Scanned Remote Repo : {remote.title}");
+                repositoryRemotes.Add(remote);
+            }
+                    if (jRemotesArray.Count == 0) {
+                        return repositoryRemotes;
+                    }
                 }
             }
             return null;
@@ -593,7 +606,8 @@ namespace GithubSpace
                 String content = await response.Content.ReadAsStringAsync();
                 JObject json = JObject.Parse(content);
                 int gitEndIndex = 8;
-                return json["clone_url"].ToString().Substring(gitEndIndex);
+                JToken? cloneUrlToken = resJson["clone_url"];
+                return cloneUrlToken.ToString().Substring(8,cloneUrlToken.ToString().Length - 12);
 
             }
 
@@ -672,5 +686,6 @@ namespace GithubSpace
             userCode = null;
             accessToken = null;
         }
+      
     }
 }
