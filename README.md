@@ -1,16 +1,17 @@
 # CSC436 - Git Visualizer
 
 ## Developers
+* Nam Do (The sole developer of this forked repository)
 * Kyle Walker
 * Ryan Pecha
 * Patrick Comden
-* Nam Do
 
 ---
 
-## User Installation
+## User Requirements:
 
-* TODO
+* Windows
+* Git
 
 ---
 
@@ -22,20 +23,10 @@
 
 ## Dev Setup
 
-1. Run `git clone https://github.com/ryanpecha/CSC436.git`
+1. Run `git clone https://github.com/namdo1225/visualizer-github.git`
 2. Install [Visual Studio](https://visualstudio.microsoft.com/downloads/) >= 2017
 3. Install [.NET Framework 4.8 (Developer Pack)](https://dotnet.microsoft.com/en-us/download/visual-studio-sdks?cid=getdotnetsdk)
-4. Install [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) >= TBD
-
----
-
-## Build Process
-
-* TODO
-
-## Release Process
-
-* TODO
+4. Install [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
 ---
 
