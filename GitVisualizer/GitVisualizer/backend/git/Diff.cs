@@ -1,26 +1,49 @@
 ﻿namespace GitVisualizer;
 
+/// <summary>
+/// A class representing the differences between 2 commits for merging.
+/// </summary>
 public class Diff
 {
 
-    public Commit commitA { get; private set; }
-    public Commit commitB { get; private set; }
+    /// <summary>
+    /// Gets or Sets the 1st commit.
+    /// </summary>
+    public Commit CommitA { get; private set; }
 
+    /// <summary>
+    /// Gets or Sets the 2nd commit.
+    /// </summary>
+    public Commit CommitB { get; private set; }
+
+    /// <summary>
+    /// The constructor for Diff
+    /// </summary>
+    /// <param name="commitA">The 1st commit for comparsion.</param>
+    /// <param name="commitB">The 2nd commit for comparison.</param>
     public Diff(Commit commitA, Commit commitB)
     {
-        this.commitA = commitA;
-        this.commitB = commitB;
-        evaluateDiff();
+        this.CommitA = commitA;
+        this.CommitB = commitB;
+        EvaluateDiff();
     }
 
-    public void recalcDiff(Commit commitA, Commit commitB)
+    /// <summary>
+    /// Calculates the difference between 2 commits.
+    /// </summary>
+    /// <param name="commitA">The commit a.</param>
+    /// <param name="commitB">The commit b.</param>
+    public void RecalcDiff(Commit commitA, Commit commitB)
     {
-        this.commitA = commitA;
-        this.commitB = commitB;
-        evaluateDiff();
+        this.CommitA = commitA;
+        this.CommitB = commitB;
+        EvaluateDiff();
     }
 
-    private void evaluateDiff()
+    /// <summary>
+    /// Evalutes differences between 2 commits.
+    /// </summary>
+    private void EvaluateDiff()
     {
 
     }

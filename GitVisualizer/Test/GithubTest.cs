@@ -1,28 +1,25 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-
-using GithubSpace;
-using System.Diagnostics;
+﻿using GithubSpace;
 using Moq;
-using System.Security.Policy;
 using Moq.Protected;
-using Newtonsoft.Json;
 using System.Text;
-using System.Runtime.InteropServices.JavaScript;
 using System.Net.Http.Headers;
-using Newtonsoft.Json.Linq;
 
 namespace GithubTestSpace
 {
+    /// <summary>
+    /// The Github class test suite.
+    /// </summary>
     [TestClass]
     public class GithubTest : Github
     {
         private static Github _github = new();
-        private TestContext context;
-        private static MediaTypeWithQualityHeaderValue jsonType = new MediaTypeWithQualityHeaderValue("application/json");
-        private String mockAccessToken = "ghu_TEST";
+        private static readonly MediaTypeWithQualityHeaderValue jsonType = new("application/json");
+        private static readonly string mockAccessToken = "ghu_TEST";
 
-        private async void MockUserCode()
+        /// <summary>
+        /// Mocks the user code and send API request to retrieve the user code.
+        /// </summary>
+        private static void MockUserCode()
         {
             using StringContent json = new(
             System.Text.Json.JsonSerializer.Serialize(new
@@ -38,28 +35,31 @@ namespace GithubTestSpace
 
             string url = "https://github.com/login/device/code";
 
-            HttpResponseMessage httpResponse = new HttpResponseMessage();
-            httpResponse.StatusCode = System.Net.HttpStatusCode.OK;
-            httpResponse.Content = json;
+            HttpResponseMessage httpResponse = new()
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = json
+            };
 
-            
-
-            Mock<HttpMessageHandler> mockHandler = new Mock<HttpMessageHandler>();
+            Mock<HttpMessageHandler> mockHandler = new();
             mockHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync",
                 ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Post && r.RequestUri.ToString().StartsWith(url)),
                 ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
-            HttpClient httpClient = new HttpClient(mockHandler.Object);
+            HttpClient httpClient = new(mockHandler.Object);
             _github = new(httpClient, url);
 
             //act
-            Task task = Task.Run(() => _github.GivePermission());
+            Task task = Task.Run(() => GivePermission());
             task.Wait();
         }
 
-        private async void MockAccessCode()
+        /// <summary>
+        /// Mocks the access code and send API request to retrieve the access code.
+        /// </summary>
+        private static void MockAccessCode()
         {
             using StringContent json = new(
             System.Text.Json.JsonSerializer.Serialize(new
@@ -73,11 +73,13 @@ namespace GithubTestSpace
 
             string url = "https://github.com/login/oauth/access_token";
 
-            HttpResponseMessage httpResponse = new HttpResponseMessage();
-            httpResponse.StatusCode = System.Net.HttpStatusCode.OK;
-            httpResponse.Content = json;
+            HttpResponseMessage httpResponse = new()
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = json
+            };
 
-            Mock<HttpMessageHandler> mockHandler = new Mock<HttpMessageHandler>();
+            Mock<HttpMessageHandler> mockHandler = new();
 
             mockHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync",
@@ -85,22 +87,30 @@ namespace GithubTestSpace
                 ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
-            HttpClient httpClient = new HttpClient(mockHandler.Object);
+            HttpClient httpClient = new(mockHandler.Object);
             SetHttpClient(httpClient, url);
 
             //act
-            Task task = Task.Run(_github.WaitForAuthorization);
+            Task task = Task.Run(Github.WaitForAuthorization);
             task.Wait();
         }
 
-        private void SetMockWebHandler(StringContent jsonObject, string urlString, System.Net.HttpStatusCode code, HttpMethod method)
+        /// <summary>
+        /// Sets mock web handler.
+        /// </summary>
+        /// <param name="jsonObject">The json object.</param>
+        /// <param name="urlString">The url string.</param>
+        /// <param name="code">The HTTP status code.</param>
+        /// <param name="method">The HTTP method.</param>
+        private static void SetMockWebHandler(StringContent jsonObject, string urlString, System.Net.HttpStatusCode code, HttpMethod method)
         {
-            HttpResponseMessage httpResponse = new HttpResponseMessage();
-            httpResponse.StatusCode = code;
-            httpResponse.Content = jsonObject;
+            HttpResponseMessage httpResponse = new()
+            {
+                StatusCode = code,
+                Content = jsonObject
+            };
 
-            Mock<HttpMessageHandler> mockHandler = new Mock<HttpMessageHandler>();
-
+            Mock<HttpMessageHandler> mockHandler = new();
 
             mockHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync",
@@ -108,10 +118,13 @@ namespace GithubTestSpace
                 ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(httpResponse);
 
-            HttpClient httpClient = new HttpClient(mockHandler.Object);
+            HttpClient httpClient = new(mockHandler.Object);
             SetHttpClient(httpClient, urlString);
         }
 
+        /// <summary>
+        /// Gives permission, get user code, test01.
+        /// </summary>
         [TestMethod]
         public void GivePermission_GetUserCode_Test01()
         {
@@ -128,11 +141,14 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://github.com/login/device/code", System.Net.HttpStatusCode.OK, HttpMethod.Post);
 
             //act
-            Task task = Task.Run(() => _github.GivePermission("public"));
+            Task task = Task.Run(() => GivePermission("public"));
             task.Wait();
-            StringAssert.Equals(Github.userCode, "GJE123");
+            Equals(UserCode, "GJE123");
         }
 
+        /// <summary>
+        /// Give permission, fail generation code, test02.
+        /// </summary>
         [TestMethod]
         public void GivePermission_FailGenerationCode_Test02()
         {
@@ -147,84 +163,25 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://github.com/login/device/code", System.Net.HttpStatusCode.BadRequest, HttpMethod.Post);
 
             //act
-            Task task = Task.Run(() => _github.GivePermission("public"));
+            Task task = Task.Run(() => GivePermission("public"));
             task.Wait();
-            StringAssert.Equals(Github.userCode, null);
+            Equals(UserCode, null);
         }
 
-        [TestMethod]
-        public void GetRepositories_NoAccessToken_Test01()
-        {
-            _github = new();
-            Task task = Task.Run(() => _github.GetRepositories());
-            Assert.AreEqual(null, _github.repos);
-        }
-
-        [TestMethod]
-        public void GetRepositories_AccessTokenExist_Test02()
-        {
-            Github.SetTestAccessCode();
-
-            //arrange
-            var reposList = new List<Repo>
-                {
-                    new Repo() { name="1", git_url="git://github.com/test/1.git"},
-                    new Repo() { name="2", git_url="git://github.com/test/2.git"},
-                    new Repo() { name="3", git_url="git://github.com/test/3.git"},
-                    new Repo() { name="4", git_url="git://github.com/test/4.git"},
-                };
-            var json = JsonConvert.SerializeObject(reposList);
-
-            string url = "http://localhost:1234";
-
-            HttpResponseMessage httpResponse = new HttpResponseMessage();
-            httpResponse.StatusCode = System.Net.HttpStatusCode.OK;
-            httpResponse.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var emptyList = new List<Repo>
-            {
-            };
-            var emptyJSON = JsonConvert.SerializeObject(emptyList);
-            HttpResponseMessage emptyHttpResponse = new HttpResponseMessage();
-            emptyHttpResponse.StatusCode = System.Net.HttpStatusCode.OK;
-            emptyHttpResponse.Content = new StringContent(emptyJSON, Encoding.UTF8, "application/json");
-
-            Mock<HttpMessageHandler> mockHandler = new Mock<HttpMessageHandler>();
-            mockHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync",
-                ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Get && r.RequestUri.ToString().StartsWith(url) && r.RequestUri.ToString().EndsWith("1")),
-                ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            mockHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync",
-                ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Get && r.RequestUri.ToString().StartsWith(url) && r.RequestUri.ToString().EndsWith("2")),
-                ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(emptyHttpResponse);
-
-
-            HttpClient httpClient = new HttpClient(mockHandler.Object);
-            SetHttpClient(httpClient, url);
-
-            //act
-            Task task = Task.Run(() => _github.GetRepositories());
-            task.Wait();
-
-            for (int i = 0; i < _github.repos.Count; i++)
-            {
-                StringAssert.Equals(reposList[i].name, _github.repos[i].name);
-                StringAssert.Equals(reposList[i].git_url.Substring(6), _github.repos[i].git_url);
-            }
-        }
-
+        /// <summary>
+        /// Waits for authorization, retrieves access token, test01.
+        /// </summary>
         [TestMethod]
         public void WaitForAuthorization_RetrieveAccessToken_Test01()
         {
             MockUserCode();
             MockAccessCode();
-            StringAssert.Equals(mockAccessToken, Github.accessToken);
+            Equals(mockAccessToken, AccessToken);
         }
 
+        /// <summary>
+        /// Waits for authorization, access denied, test02.
+        /// </summary>
         [TestMethod]
         public void WaitForAuthorization_AccessDenied_Test02()
         {
@@ -242,11 +199,14 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://github.com/login/oauth/access_token", System.Net.HttpStatusCode.OK, HttpMethod.Post);
 
             //act
-            Task task = Task.Run(_github.WaitForAuthorization);
+            Task task = Task.Run(WaitForAuthorization);
             task.Wait();
-            Assert.AreEqual(null, accessToken);
+            Assert.AreEqual(null, AccessToken);
         }
 
+        /// <summary>
+        /// Waits for authorization, timeout 1, test03.
+        /// </summary>
         [TestMethod]
         public void WaitForAuthorization_Timeout01_Test03()
         {
@@ -264,11 +224,14 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://github.com/login/oauth/access_token", System.Net.HttpStatusCode.OK, HttpMethod.Post);
 
             //act
-            Task task = Task.Run(_github.WaitForAuthorization);
+            Task task = Task.Run(WaitForAuthorization);
             task.Wait();
-            Assert.AreEqual(null, accessToken);
+            Assert.AreEqual(null, AccessToken);
         }
 
+        /// <summary>
+        /// Waits for authorization, timeout 2, test04.
+        /// </summary>
         [TestMethod]
         public void WaitForAuthorization_Timeout02_Test04()
         {
@@ -286,24 +249,30 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://github.com/login/oauth/access_token", System.Net.HttpStatusCode.BadRequest, HttpMethod.Post);
 
             //act
-            Task task = Task.Run(_github.WaitForAuthorization);
+            Task task = Task.Run(WaitForAuthorization);
             task.Wait();
-            Assert.AreEqual(null, accessToken);
+            Assert.AreEqual(null, AccessToken);
         }
 
+        /// <summary>
+        /// Waits for authorization, no user code, test05.
+        /// </summary>
         [TestMethod]
         public void WaitForAuthorization_NoUserCode_Test05()
         {
             Github.ResetData();
             Task task = Task.Run(WaitForAuthorization);
-            Assert.AreEqual(null, Github.accessToken);
+            Assert.AreEqual(null, Github.AccessToken);
             task.Wait();
         }
 
+        /// <summary>
+        /// Get user info, get username, test01.
+        /// </summary>
         [TestMethod]
         public void GetUserInfo_GetUsername_Test01()
         {
-            Github.SetTestAccessCode();
+            SetTestAccessCode();
 
             using StringContent json = new(
             System.Text.Json.JsonSerializer.Serialize(new
@@ -322,14 +291,17 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/user", System.Net.HttpStatusCode.OK, HttpMethod.Get);
 
             //act
-            Task task = Task.Run(_github.GetUserInfo);
+            Task task = Task.Run(GetUserInfo);
             task.Wait();
 
-            StringAssert.Equals("octocat", _github.username);
-            StringAssert.Equals("https://github.com/images/error/octocat_happy.gif", _github.avatarURL);
-            StringAssert.Equals("https://github.com/octocat", _github.userGitHubURL);
+            Equals("octocat", Username);
+            Equals("https://github.com/images/error/octocat_happy.gif", AvatarURL);
+            Equals("https://github.com/octocat", UserGitHubURL);
         }
 
+        /// <summary>
+        /// Get user info, no access token, test02.
+        /// </summary>
         [TestMethod]
         public void GetUserInfo_NoAccessToken_Test02()
         {
@@ -351,12 +323,15 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/user", System.Net.HttpStatusCode.OK, HttpMethod.Get);
 
             //act
-            Task task = Task.Run(_github.GetUserInfo);
+            Task task = Task.Run(GetUserInfo);
             task.Wait();
 
-            StringAssert.Equals(null, _github.username);
+            StringAssert.Equals(null, Username);
         }
 
+        /// <summary>
+        /// Get user info, API error, test03.
+        /// </summary>
         [TestMethod]
         public void GetUserInfo_APIError_Test03()
         {
@@ -370,12 +345,15 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/user", System.Net.HttpStatusCode.BadRequest, HttpMethod.Get);
 
             //act
-            Task task = Task.Run(_github.GetUserInfo);
+            Task task = Task.Run(GetUserInfo);
             task.Wait();
 
-            StringAssert.Equals(null, _github.username);
+            StringAssert.Equals(null, Username);
         }
 
+        /// <summary>
+        /// Deletes token, deletion is valid, test01.
+        /// </summary>
         [TestMethod]
         public void DeleteToken_DeleteValid_Test01()
         {
@@ -390,11 +368,14 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/applications/", System.Net.HttpStatusCode.NoContent, HttpMethod.Delete);
 
             //act
-            Task task = Task.Run(_github.DeleteToken);
+            Task task = Task.Run(DeleteToken);
             task.Wait();
-            StringAssert.Equals(null, Github.accessToken);
+            StringAssert.Equals(null, Github.AccessToken);
         }
 
+        /// <summary>
+        /// Deletes token, deletion is invalid 01, test02.
+        /// </summary>
         [TestMethod]
         public void DeleteToken_DeleteInvalid01_Test02()
         {
@@ -409,14 +390,17 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/applications/", System.Net.HttpStatusCode.BadRequest, HttpMethod.Delete);
 
             //act
-            bool deleted = _github.DeleteToken();
+            bool deleted = DeleteToken();
             Assert.IsTrue(!deleted);
         }
 
+        /// <summary>
+        /// Deletes token, deletion is invalid 02, test03.
+        /// </summary>
         [TestMethod]
         public void DeleteToken_DeleteInvalid02_Test03()
         {
-            Github.SetTestAccessCode();
+            SetTestAccessCode();
             using StringContent json = new(
             System.Text.Json.JsonSerializer.Serialize(new
             {
@@ -427,12 +411,15 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/applications/", System.Net.HttpStatusCode.NotModified, HttpMethod.Delete);
 
             //act
-            bool deleted = _github.DeleteToken();
+            bool deleted = DeleteToken();
             Assert.IsTrue(!deleted);
         }
 
+        /// <summary>
+        /// Deletes token,no access token, test04.
+        /// </summary>
         [TestMethod]
-        public void DeleteToken_NoAccessToken_Test03()
+        public void DeleteToken_NoAccessToken_Test04()
         {
             ResetData();
             using StringContent json = new(
@@ -445,98 +432,33 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/applications/", System.Net.HttpStatusCode.PartialContent, HttpMethod.Delete);
 
             //act
-            bool deleted = _github.DeleteToken();
+            bool deleted = DeleteToken();
             Assert.IsTrue(!deleted);
         }
 
-        [TestMethod]
-        public void CreateAuthenticatedGit_int_Valid_Test01()
-        {
-            Github.SetTestAccessCode();
-
-            //arrange
-            var reposList = new List<Repo>
-                {
-                    new Repo() { name="1", git_url="git://github.com/test/1.git"},
-                    new Repo() { name="2", git_url="git://github.com/test/2.git"},
-                    new Repo() { name="3", git_url="git://github.com/test/3.git"},
-                    new Repo() { name="4", git_url="git://github.com/test/4.git"},
-                };
-            var json = JsonConvert.SerializeObject(reposList);
-
-            string url = "http://localhost:1234";
-
-            HttpResponseMessage httpResponse = new HttpResponseMessage();
-            httpResponse.StatusCode = System.Net.HttpStatusCode.OK;
-            httpResponse.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var emptyList = new List<Repo>
-            {
-            };
-            var emptyJSON = JsonConvert.SerializeObject(emptyList);
-            HttpResponseMessage emptyHttpResponse = new HttpResponseMessage();
-            emptyHttpResponse.StatusCode = System.Net.HttpStatusCode.OK;
-            emptyHttpResponse.Content = new StringContent(emptyJSON, Encoding.UTF8, "application/json");
-
-            Mock<HttpMessageHandler> mockHandler = new Mock<HttpMessageHandler>();
-            mockHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync",
-                ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Get && r.RequestUri.ToString().StartsWith(url) && r.RequestUri.ToString().EndsWith("1")),
-                ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponse);
-
-            mockHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync",
-                ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Get && r.RequestUri.ToString().StartsWith(url) && r.RequestUri.ToString().EndsWith("2")),
-                ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(emptyHttpResponse);
-
-
-            HttpClient httpClient = new HttpClient(mockHandler.Object);
-            SetHttpClient(httpClient, url);
-
-            //act
-            Task task = Task.Run(() => _github.GetRepositories());
-            task.Wait();
-
-            for (int i = 0; i < _github.repos.Count; i++)
-                StringAssert.Equals($"https://{Github.accessToken}@github.com/test/{i + 1}.git", _github.CreateAuthenticatedGit(i));
-
-            Assert.AreEqual($"createAuthenticatedGit(): Invalid index: {_github.repos.Count}", _github.CreateAuthenticatedGit(_github.repos.Count));
-            Assert.AreEqual("createAuthenticatedGit(): Invalid index: -1", _github.CreateAuthenticatedGit(-1));
-        }
-
-        [TestMethod]
-        public void CreateAuthenticatedGit_int_NoAccessToken_Test02()
-        {
-            ResetData();
-            Assert.AreEqual(null, _github.CreateAuthenticatedGit(0));
-        }
-
+        /// <summary>
+        /// Creates authenticated git string, valid string, test01.
+        /// </summary>
         [TestMethod]
         public void CreateAuthenticatedGit_str_Valid_Test01()
         {
             SetTestAccessCode();
-            Assert.AreEqual($"https://{Github.accessToken}@test", _github.CreateAuthenticatedGit("test"));
+            Assert.AreEqual($"https://{AccessToken}@test", CreateAuthenticatedGit("test"));
         }
 
+        /// <summary>
+        /// Creates authenticated git string, no access token, test02.
+        /// </summary>
         [TestMethod]
         public void CreateAuthenticatedGit_str_NoAccessToken_Test02()
         {
             ResetData();
-            Assert.AreEqual(null, _github.CreateAuthenticatedGit("test"));
+            Assert.AreEqual(null, CreateAuthenticatedGit("test"));
         }
 
-        [TestMethod]
-        public void SetRememberUserAccessBool_Set_Test01()
-        {
-            _github.SetRememberUserAccessBool(true);
-            Assert.AreEqual(true, _github.RememberUserAccess);
-
-            _github.SetRememberUserAccessBool(false);
-            Assert.AreEqual(false, _github.RememberUserAccess);
-        }
-
+        /// <summary>
+        /// Creates repository, no access token, test01.
+        /// </summary>
         [TestMethod]
         public void CreateRepository_NoAccessToken_Test01()
         {
@@ -551,10 +473,13 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/applications/", System.Net.HttpStatusCode.Created, HttpMethod.Post);
 
             //act
-            String result = Task.Run(() => _github.CreateRepo("test")).Result;
+            String? result = Task.Run(() => CreateRepo("test")).Result;
             Assert.AreEqual(null, result);
         }
 
+        /// <summary>
+        /// Creates repository, valid, test02.
+        /// </summary>
         [TestMethod]
         public void CreateRepository_Valid_Test02()
         {
@@ -570,10 +495,13 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/user/repos", System.Net.HttpStatusCode.Created, HttpMethod.Post);
 
             //act
-            String result = Task.Run(() => _github.CreateRepo("test")).Result;
+            String? result = Task.Run(() => CreateRepo("test")).Result;
             Assert.AreEqual("github.com/octocat/test.git", result);
         }
 
+        /// <summary>
+        /// Creates repository, bad API response, test03.
+        /// </summary>
         [TestMethod]
         public void CreateRepository_BadAPIResponse_Test03()
         {
@@ -588,11 +516,13 @@ namespace GithubTestSpace
             SetMockWebHandler(json, "https://api.github.com/user/repos", System.Net.HttpStatusCode.BadRequest, HttpMethod.Post);
 
             //act
-            String result = Task.Run(() => _github.CreateRepo("test")).Result;
+            string? result = Task.Run(() => CreateRepo("test")).Result;
             Assert.AreEqual(null, result);
         }
 
-
+        /// <summary>
+        /// Credential, set and get and delete, test01.
+        /// </summary>
         [TestMethod]
         public void Credential_SetGetDelete_Test01()
         {
@@ -600,17 +530,20 @@ namespace GithubTestSpace
             SetUsername();
             SetTestAccessCode();
 
-            string tempAccessToken = accessToken;
-            string tempUsername = username;
+            string? tempAccessToken = AccessToken;
+            string? tempUsername = Username;
 
             Assert.AreEqual(true, SaveUser());
-            Assert.AreEqual(true, ReadTokenAndUserName());
-            Assert.AreEqual(tempUsername, username);
-            Assert.AreEqual(tempAccessToken, accessToken);
+            Assert.AreEqual(true, LoadStoredCredentials());
+            Assert.AreEqual(tempUsername, Username);
+            Assert.AreEqual(tempAccessToken, AccessToken);
             Assert.AreEqual(true, DeleteStoredCredential());
 
         }
 
+        /// <summary>
+        /// Credential, credentials already exist, test02.
+        /// </summary>
         [TestMethod]
         public void Credential_AlreadyExist_Test02()
         {
@@ -623,6 +556,9 @@ namespace GithubTestSpace
             Assert.AreEqual(true, DeleteStoredCredential());
         }
 
+        /// <summary>
+        /// Credential, retrieves nonexisting credential, test03.
+        /// </summary>
         [TestMethod]
         public void Credential_RetrieveNothing_Test03()
         {
@@ -631,9 +567,12 @@ namespace GithubTestSpace
             SetTestAccessCode();
 
             DeleteStoredCredential();
-            Assert.AreEqual(false, ReadTokenAndUserName());
+            Assert.AreEqual(false, LoadStoredCredentials());
         }
 
+        /// <summary>
+        /// Credential, credential already deleted, test04.
+        /// </summary>
         [TestMethod]
         public void Credential_AlreadyDeleted_Test04()
         {
@@ -645,6 +584,9 @@ namespace GithubTestSpace
             Assert.AreEqual(false, DeleteStoredCredential());
         }
 
+        /// <summary>
+        /// Credential, mo credentials to store, test04.
+        /// </summary>
         [TestMethod]
         public void Credential_NothingToSave_Test04()
         {

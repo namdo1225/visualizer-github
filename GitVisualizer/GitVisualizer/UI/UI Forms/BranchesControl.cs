@@ -1,25 +1,18 @@
-﻿using Microsoft.ApplicationInsights;
-using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Drawing;
+﻿using System.Diagnostics;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace GitVisualizer.UI.UI_Forms
 {
+
+    /// <summary>
+    /// The branches control UI.
+    /// </summary>
     public partial class BranchesControl : UserControl
     {
         private const int pixelsPerBranchNode = 32;
         private const int pixelsPerBranchRow = 42;
         private const int branchNodeRadius = 12;
-        private List<Color> branchNodeColors =
+        private readonly List<Color> branchNodeColors =
             [Color.PowderBlue,
             Color.LightGreen,
             Color.DarkSalmon,
@@ -30,16 +23,14 @@ namespace GitVisualizer.UI.UI_Forms
             Color.DarkOliveGreen,
             Color.Orange];
 
-        private Tuple<List<Branch>, List<Commit>> commitHistory = null;
-
+        private Tuple<List<Branch>, List<Commit>>? commitHistory = null;
 
         //private Tuple<List<Branch>, List<Commit>> commitHistory = null;
-        Commit selectedCommit = null;
-        
-        
-        private int currentGraphIndex = 0;
+        Commit? selectedCommit = null;
 
-
+        /// <summary>
+        /// The constructor for BranchesControl.
+        /// </summary>
         public BranchesControl()
         {
             InitializeComponent();
@@ -48,45 +39,53 @@ namespace GitVisualizer.UI.UI_Forms
             deleteBranchButton.Visible = false;
         }
 
-
+        /// <summary>
+        /// Called when this control is displayed again.
+        /// </summary>
         public void OnBranchesControlFocus()
         {
             UpdateLiveReposAndBranch();
             UpdateGridView();
         }
 
+        /// <summary>
+        /// Updates live repos and branch.
+        /// </summary>
         private void UpdateLiveReposAndBranch()
         {
-            if (GitAPI.liveRepository == null) { return; }
+            if (GitAPI.LiveRepository == null) { return; }
 
-            activeRepositoryTextLabel.Text = GitAPI.liveRepository.title;
+            activeRepositoryTextLabel.Text = GitAPI.LiveRepository.Title;
             activeRepositoryTextLabel.ForeColor = MainForm.AppTheme.TextBright;
 
-            if (GitAPI.liveBranch != null)
+            if (GitAPI.LiveBranch != null)
             {
-                checkedOutBranchTextLabel.Text = "Branch: " + GitAPI.liveBranch.title;
+                checkedOutBranchTextLabel.Text = "Branch: " + GitAPI.LiveBranch.Title;
             }
-            else if (GitAPI.liveCommit != null)
+            else if (GitAPI.LiveCommit != null)
             {
-                checkedOutBranchTextLabel.Text = "Commit: " + GitAPI.liveCommit.shortCommitHash;
+                checkedOutBranchTextLabel.Text = "Commit: " + GitAPI.LiveCommit.ShortCommitHash;
             }
 
         }
+
+        /// <summary>
+        /// Updates grid view.
+        /// </summary>
         private void UpdateGridView()
         {
             // Update view by getting branch info
             branchesGridView.Rows.Clear();
-            commitHistory = GitAPI.Getters.getCommitsAndBranches();
+            commitHistory = GitAPI.Getters.GetCommitsAndBranches();
 
             Program.MainForm.UpdateAppTitle();
 
             foreach (Commit commit in commitHistory.Item2)
             {
-                List<Branch> branches = commit.branches;
-                string branchList = String.Join(", ", branches);
-                Debug.WriteLine(commit.subject);
-                int index = branchesGridView.Rows.Add(null, branchList, commit.shortCommitHash, commit.committerName, commit.committerDate, commit.subject);
-                branchesGridView.Rows[index].Cells[0].ToolTipText = commit.longCommitHash;
+                List<Branch> branches = commit.Branches;
+                string branchList = string.Join(", ", branches);
+                int index = branchesGridView.Rows.Add(null, branchList, commit.ShortCommitHash, commit.CommitterName, commit.CommitterDate, commit.Subject);
+                branchesGridView.Rows[index].Cells[0].ToolTipText = commit.LongCommitHash;
             }
 
             branchComboBox.DataSource = commitHistory.Item1;
@@ -100,54 +99,89 @@ namespace GitVisualizer.UI.UI_Forms
 
         }
 
+        /// <summary>
+        /// Checkouts a branch.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         public void OnCheckoutToBranchButton(object sender, EventArgs e)
         {
             if (branchComboBox.Items.Count == 0) { return; }
             Branch selected = (Branch)branchComboBox.SelectedItem;
-            GitAPI.Actions.LocalActions.checkoutBranch(selected);
-            if (GitAPI.liveBranch == null) { return; }
-            checkedOutBranchTextLabel.Text = "Branch: " + GitAPI.liveBranch.title;
+            GitAPI.Actions.LocalActions.CheckoutBranch(selected);
+            if (GitAPI.LiveBranch == null) { return; }
+            checkedOutBranchTextLabel.Text = "Branch: " + GitAPI.LiveBranch.Title;
             branchesGridView.Refresh();
         }
 
+        /// <summary>
+        /// Deletes branch button.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         public void OnDeleteBranchButton(object sender, EventArgs e)
         {
-            if (branchComboBox.Items.Count == 0) { return; }
+            if (branchComboBox.Items.Count == 0)
+                return;
             //Branch selected = (Branch)branchComboBox.SelectedItem;
-            Branch selected = null;
-            GitAPI.Actions.LocalActions.deleteBranchLocal(selected);
+            Branch? selected = null;
+            GitAPI.Actions.LocalActions.DeleteBranchLocal(selected);
         }
 
+        /// <summary>
+        /// Creates branch from current branch.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         public void OnCreateBranchFromCurrentButton(object sender, EventArgs e)
         {
             string title = newBranchFromCommitTextBox.Text;
-            if (title.Length == 0) { return; }
-            Branch branch = GitAPI.Actions.LocalActions.createLocalBranch(title, GitAPI.liveCommit);
-            GitAPI.Actions.RemoteActions.addLocalBranchToRemote(branch);
+            if (title.Length == 0)
+            {
+                MainForm.OpenDialog("Branch name is empty!");
+                return;
+            }
+            Branch branch = GitAPI.Actions.LocalActions.CreateLocalBranch(title, GitAPI.LiveCommit);
+            GitAPI.Actions.RemoteActions.AddLocalBranchToRemote(branch);
         }
 
+        /// <summary>
+        /// Checkouts to selected commit.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         public void OnCheckoutToSelectedCommitButton(object sender, EventArgs e)
         {
             if (selectedCommit == null) { return; }
-            checkedOutBranchTextLabel.Text = "Commit: " + selectedCommit.shortCommitHash;
-            GitAPI.Actions.LocalActions.checkoutCommit(selectedCommit);
+            checkedOutBranchTextLabel.Text = "Commit: " + selectedCommit.ShortCommitHash;
+            GitAPI.Actions.LocalActions.CheckoutCommit(selectedCommit);
             branchesGridView.Refresh();
         }
 
+        /// <summary>
+        /// Creates branch from selected commit.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         public void OnCreateBranchFromSelectedButton(object sender, EventArgs e)
         {
             if (selectedCommit == null) { return; }
             string title = newBranchFromCommitTextBox.Text;
             if (title.Length == 0) { return; }
-            GitAPI.Actions.LocalActions.createLocalBranch(title, selectedCommit);
+            GitAPI.Actions.LocalActions.CreateLocalBranch(title, selectedCommit);
         }
 
-        private void branchesGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        /// <summary>
+        /// The handler for branches grid view cell content click.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The DataGridViewCellEventArgs.</param>
+        private void BranchesGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             int index = e.RowIndex;
             if (index < 0) { return; }
             selectedCommit = commitHistory.Item2[index];
-            selectedCommitTextLabel.Text = "Selected Commit: " + selectedCommit.shortCommitHash + " - " + selectedCommit.subject;
+            selectedCommitTextLabel.Text = "Selected Commit: " + selectedCommit.ShortCommitHash + " - " + selectedCommit.Subject;
             checkoutCommitButton.Visible = true;
             newBranchFromCommitTextBox.Visible = true;
             createBranchFromSelectedButton.Visible = true;
@@ -169,36 +203,33 @@ namespace GitVisualizer.UI.UI_Forms
 
             int cellHeight = branchesGridView.RowTemplate.Height;
             int depthOffset = commit.graphColIndex + 1;
-            
+
 
             SmoothingMode prevSmoothing = e.Graphics.SmoothingMode;
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             e.PaintBackground(e.CellBounds, true);
-            
+
 
             int colorOffset = depthOffset % branchNodeColors.Count;
-            
+
 
             int xOffset = depthOffset * pixelsPerBranchNode;
-            Pen pen = new Pen(branchNodeColors[colorOffset], 3);
-
-
-
+            Pen pen = new(branchNodeColors[colorOffset], 3);
 
             // Node circles
 
             int x = e.CellBounds.X + (xOffset / 2);
             int y = e.CellBounds.Y + ((e.CellBounds.Height / 2) - (branchNodeRadius / 2));
 
-            Point start = new Point(x, y);
+            Point start = new(x, y);
 
             // Parents
             foreach (Tuple<int, int> targetCoord in commit.graphOutRowColPairs)
             {
                 int xDiff = (targetCoord.Item2 - commit.graphColIndex) * (pixelsPerBranchNode);
                 int yDiff = (targetCoord.Item1 - commit.graphRowIndex) * (pixelsPerBranchNode + 12);
-                Pen linepen = new Pen(branchNodeColors[(targetCoord.Item2 + 1) % branchNodeColors.Count], 3);
+                Pen linepen = new(branchNodeColors[(targetCoord.Item2 + 1) % branchNodeColors.Count], 3);
                 e.Graphics.DrawLine(linepen, start.X + lineXOffset, start.Y, start.X + xDiff + lineXOffset, start.Y - yDiff);
             }
             //// Children
@@ -212,7 +243,7 @@ namespace GitVisualizer.UI.UI_Forms
 
 
             e.Graphics.FillEllipse(pen.Brush, x, y, branchNodeRadius, branchNodeRadius);
-            if (commit == GitAPI.liveCommit)
+            if (commit == GitAPI.LiveCommit)
             {
                 pen.Color = Color.Black;
                 e.Graphics.FillEllipse(pen.Brush, x + 3, y + 3, branchNodeRadius / 2, branchNodeRadius / 2);
@@ -330,6 +361,12 @@ namespace GitVisualizer.UI.UI_Forms
 
         }
 
+        /// <summary>
+        /// The pixels from coord.
+        /// </summary>
+        /// <param name="col">The column of the pixel.</param>
+        /// <param name="row">The row of the pixel.</param>
+        /// <returns>The new point.</returns>
         private Point PixelsFromCoord(int col, int row)
         {
             int x = 0;

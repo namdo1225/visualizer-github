@@ -1,5 +1,9 @@
 ﻿namespace GitVisualizer.UI.UI_Forms
 {
+
+    /// <summary>
+    /// The repositories control UI.
+    /// </summary>
     partial class RepositoriesControl
     {
         /// <summary> 
@@ -32,6 +36,7 @@
             localReposColumn = new DataGridViewTextBoxColumn();
             remoteReposColumn = new DataGridViewTextBoxColumn();
             repositoriesControlPanel = new Panel();
+            rescanButton = new Button();
             activeRepoPanel = new Panel();
             activeRepositoryTextLabel = new Label();
             activeRepoLabel = new Label();
@@ -51,10 +56,12 @@
             setAsActiveRepoButton = new Button();
             openInFileExplorerButton = new Button();
             createNewRemoteRepoButton = new Button();
+            deleteLocalRepoButton = new Button();
             flowLayoutPanel4 = new FlowLayoutPanel();
             remoteRepoButtonsLabel = new Label();
-            openOnGithubComButton = new Button();
             cloneToLocalButton = new Button();
+            openOnGithubComButton = new Button();
+            deleteRemoteRepoButton = new Button();
             ((System.ComponentModel.ISupportInitialize)repositoriesGridView).BeginInit();
             repositoriesControlPanel.SuspendLayout();
             activeRepoPanel.SuspendLayout();
@@ -90,7 +97,7 @@
             repositoriesGridView.ShowEditingIcon = false;
             repositoriesGridView.Size = new Size(895, 537);
             repositoriesGridView.TabIndex = 0;
-            repositoriesGridView.CellClick += repositoriesGridView_CellContentClick;
+            repositoriesGridView.CellClick += RepositoriesGridView_CellContentClick;
             // 
             // localReposColumn
             // 
@@ -114,7 +121,9 @@
             // 
             repositoriesControlPanel.AutoSize = true;
             repositoriesControlPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            repositoriesControlPanel.BackColor = SystemColors.Control;
             repositoriesControlPanel.BorderStyle = BorderStyle.FixedSingle;
+            repositoriesControlPanel.Controls.Add(rescanButton);
             repositoriesControlPanel.Controls.Add(activeRepoPanel);
             repositoriesControlPanel.Controls.Add(titleLabel);
             repositoriesControlPanel.Controls.Add(flowLayoutPanel1);
@@ -124,6 +133,20 @@
             repositoriesControlPanel.Name = "repositoriesControlPanel";
             repositoriesControlPanel.Size = new Size(280, 675);
             repositoriesControlPanel.TabIndex = 1;
+            repositoriesControlPanel.Paint += RepositoriesControlPanel_Paint;
+            // 
+            // rescanButton
+            // 
+            rescanButton.Dock = DockStyle.Top;
+            rescanButton.FlatStyle = FlatStyle.Flat;
+            rescanButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            rescanButton.Location = new Point(0, 161);
+            rescanButton.Name = "rescanButton";
+            rescanButton.Size = new Size(278, 38);
+            rescanButton.TabIndex = 8;
+            rescanButton.Text = "Rescan for Repositories";
+            rescanButton.UseVisualStyleBackColor = true;
+            rescanButton.Click += RescanButton_Click;
             // 
             // activeRepoPanel
             // 
@@ -138,6 +161,7 @@
             // activeRepositoryTextLabel
             // 
             activeRepositoryTextLabel.Font = new Font("Segoe UI", 18F, FontStyle.Regular, GraphicsUnit.Point);
+            activeRepositoryTextLabel.ForeColor = SystemColors.ControlText;
             activeRepositoryTextLabel.Location = new Point(3, 21);
             activeRepositoryTextLabel.Name = "activeRepositoryTextLabel";
             activeRepositoryTextLabel.Padding = new Padding(12, 0, 0, 0);
@@ -174,11 +198,11 @@
             // 
             flowLayoutPanel1.Controls.Add(flowLayoutPanel2);
             flowLayoutPanel1.Dock = DockStyle.Bottom;
-            flowLayoutPanel1.Location = new Point(0, 441);
+            flowLayoutPanel1.Location = new Point(0, 449);
             flowLayoutPanel1.Margin = new Padding(0);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
             flowLayoutPanel1.Padding = new Padding(8);
-            flowLayoutPanel1.Size = new Size(278, 232);
+            flowLayoutPanel1.Size = new Size(278, 224);
             flowLayoutPanel1.TabIndex = 7;
             // 
             // flowLayoutPanel2
@@ -193,7 +217,7 @@
             flowLayoutPanel2.Location = new Point(11, 11);
             flowLayoutPanel2.Name = "flowLayoutPanel2";
             flowLayoutPanel2.Padding = new Padding(4);
-            flowLayoutPanel2.Size = new Size(253, 209);
+            flowLayoutPanel2.Size = new Size(253, 279);
             flowLayoutPanel2.TabIndex = 8;
             // 
             // localReposLabel
@@ -302,6 +326,7 @@
             flowLayoutPanel3.Controls.Add(setAsActiveRepoButton);
             flowLayoutPanel3.Controls.Add(openInFileExplorerButton);
             flowLayoutPanel3.Controls.Add(createNewRemoteRepoButton);
+            flowLayoutPanel3.Controls.Add(deleteLocalRepoButton);
             flowLayoutPanel3.Dock = DockStyle.Fill;
             flowLayoutPanel3.Location = new Point(0, 0);
             flowLayoutPanel3.Name = "flowLayoutPanel3";
@@ -363,11 +388,26 @@
             createNewRemoteRepoButton.Visible = false;
             createNewRemoteRepoButton.Click += OnCreateNewRemoteRepoButton;
             // 
+            // deleteLocalRepoButton
+            // 
+            deleteLocalRepoButton.FlatStyle = FlatStyle.Flat;
+            deleteLocalRepoButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            deleteLocalRepoButton.Location = new Point(165, 79);
+            deleteLocalRepoButton.Name = "deleteLocalRepoButton";
+            deleteLocalRepoButton.Size = new Size(148, 28);
+            deleteLocalRepoButton.TabIndex = 8;
+            deleteLocalRepoButton.Tag = "repoButton";
+            deleteLocalRepoButton.Text = "Delete Repository";
+            deleteLocalRepoButton.UseVisualStyleBackColor = true;
+            deleteLocalRepoButton.Visible = false;
+            deleteLocalRepoButton.Click += DeleteLocalRepo_Click;
+            // 
             // flowLayoutPanel4
             // 
             flowLayoutPanel4.Controls.Add(remoteRepoButtonsLabel);
-            flowLayoutPanel4.Controls.Add(openOnGithubComButton);
             flowLayoutPanel4.Controls.Add(cloneToLocalButton);
+            flowLayoutPanel4.Controls.Add(openOnGithubComButton);
+            flowLayoutPanel4.Controls.Add(deleteRemoteRepoButton);
             flowLayoutPanel4.Dock = DockStyle.Fill;
             flowLayoutPanel4.Location = new Point(0, 0);
             flowLayoutPanel4.Name = "flowLayoutPanel4";
@@ -387,12 +427,26 @@
             remoteRepoButtonsLabel.TabIndex = 5;
             remoteRepoButtonsLabel.Text = "Remote: ";
             // 
+            // cloneToLocalButton
+            // 
+            cloneToLocalButton.FlatStyle = FlatStyle.Flat;
+            cloneToLocalButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            cloneToLocalButton.Location = new Point(11, 45);
+            cloneToLocalButton.Name = "cloneToLocalButton";
+            cloneToLocalButton.Size = new Size(148, 28);
+            cloneToLocalButton.TabIndex = 0;
+            cloneToLocalButton.Tag = "repoButton";
+            cloneToLocalButton.Text = "Clone To Local";
+            cloneToLocalButton.UseVisualStyleBackColor = true;
+            cloneToLocalButton.Visible = false;
+            cloneToLocalButton.Click += OnCloneToLocalButton;
+            // 
             // openOnGithubComButton
             // 
             openOnGithubComButton.FlatStyle = FlatStyle.Flat;
             flowLayoutPanel4.SetFlowBreak(openOnGithubComButton, true);
             openOnGithubComButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
-            openOnGithubComButton.Location = new Point(11, 45);
+            openOnGithubComButton.Location = new Point(165, 45);
             openOnGithubComButton.Name = "openOnGithubComButton";
             openOnGithubComButton.Size = new Size(148, 28);
             openOnGithubComButton.TabIndex = 6;
@@ -402,19 +456,20 @@
             openOnGithubComButton.Visible = false;
             openOnGithubComButton.Click += OnOpenOnGithubComButton;
             // 
-            // cloneToLocalButton
+            // deleteRemoteRepoButton
             // 
-            cloneToLocalButton.FlatStyle = FlatStyle.Flat;
-            cloneToLocalButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
-            cloneToLocalButton.Location = new Point(11, 79);
-            cloneToLocalButton.Name = "cloneToLocalButton";
-            cloneToLocalButton.Size = new Size(148, 28);
-            cloneToLocalButton.TabIndex = 0;
-            cloneToLocalButton.Tag = "repoButton";
-            cloneToLocalButton.Text = "Clone To Local";
-            cloneToLocalButton.UseVisualStyleBackColor = true;
-            cloneToLocalButton.Visible = false;
-            cloneToLocalButton.Click += OnCloneToLocalButton;
+            deleteRemoteRepoButton.FlatStyle = FlatStyle.Flat;
+            flowLayoutPanel4.SetFlowBreak(deleteRemoteRepoButton, true);
+            deleteRemoteRepoButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            deleteRemoteRepoButton.Location = new Point(11, 79);
+            deleteRemoteRepoButton.Name = "deleteRemoteRepoButton";
+            deleteRemoteRepoButton.Size = new Size(148, 28);
+            deleteRemoteRepoButton.TabIndex = 7;
+            deleteRemoteRepoButton.Tag = "repoButton";
+            deleteRemoteRepoButton.Text = "Delete Repository";
+            deleteRemoteRepoButton.UseVisualStyleBackColor = true;
+            deleteRemoteRepoButton.Visible = false;
+            deleteRemoteRepoButton.Click += DeleteRemoteRepo_Click;
             // 
             // RepositoriesControl
             // 
@@ -448,7 +503,7 @@
 
         #endregion
 
-        private void ApplyColorTheme(UITheme.AppTheme theme)
+        public void ApplyColorTheme(UITheme.AppTheme theme)
         {
             BackColor = theme.AppBackground;
             ForeColor = theme.TextSoft;
@@ -522,5 +577,8 @@
         private Label trackedReposLabel;
         private FlowLayoutPanel flowLayoutPanel3;
         private FlowLayoutPanel flowLayoutPanel4;
+        private Button rescanButton;
+        private Button deleteLocalRepoButton;
+        private Button deleteRemoteRepoButton;
     }
 }

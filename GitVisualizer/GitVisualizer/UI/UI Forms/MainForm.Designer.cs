@@ -38,8 +38,11 @@ namespace GitVisualizer.UI.UI_Forms
             mergingPageButton = new Button();
             mainPanel = new Panel();
             pageButtonsPanel = new Panel();
-            buttonsMenuPanel = new Panel();
+            settingsButton = new Button();
+            loginButton = new Button();
+            rememberMeCheckbox = new CheckBox();
             revokeAccessButton = new Button();
+            buttonsMenuPanel = new Panel();
             navigationTooltip = new ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)githubBindingSource).BeginInit();
             pageButtonsPanel.SuspendLayout();
@@ -56,7 +59,7 @@ namespace GitVisualizer.UI.UI_Forms
             repositoriesPageButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             repositoriesPageButton.Location = new Point(12, 7);
             repositoriesPageButton.Name = "repositoriesPageButton";
-            repositoriesPageButton.Size = new Size(156, 32);
+            repositoriesPageButton.Size = new Size(123, 32);
             repositoriesPageButton.TabIndex = 0;
             repositoriesPageButton.Text = "Repositories";
             navigationTooltip.SetToolTip(repositoriesPageButton, "For managing, creating, and viewing local and remote repositories\r\n");
@@ -67,9 +70,9 @@ namespace GitVisualizer.UI.UI_Forms
             // 
             branchesPageButton.FlatStyle = FlatStyle.Flat;
             branchesPageButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            branchesPageButton.Location = new Point(174, 7);
+            branchesPageButton.Location = new Point(141, 7);
             branchesPageButton.Name = "branchesPageButton";
-            branchesPageButton.Size = new Size(156, 32);
+            branchesPageButton.Size = new Size(119, 32);
             branchesPageButton.TabIndex = 1;
             branchesPageButton.Text = "Branches";
             navigationTooltip.SetToolTip(branchesPageButton, "Shows history, changesets, and branches and allows checking into commits or branches");
@@ -80,9 +83,9 @@ namespace GitVisualizer.UI.UI_Forms
             // 
             mergingPageButton.FlatStyle = FlatStyle.Flat;
             mergingPageButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            mergingPageButton.Location = new Point(336, 7);
+            mergingPageButton.Location = new Point(266, 7);
             mergingPageButton.Name = "mergingPageButton";
-            mergingPageButton.Size = new Size(156, 32);
+            mergingPageButton.Size = new Size(120, 32);
             mergingPageButton.TabIndex = 2;
             mergingPageButton.Text = "Changes";
             navigationTooltip.SetToolTip(mergingPageButton, "Allows for staging and syncing changes with repository, and shows differences\r\n");
@@ -101,6 +104,9 @@ namespace GitVisualizer.UI.UI_Forms
             // 
             // pageButtonsPanel
             // 
+            pageButtonsPanel.Controls.Add(settingsButton);
+            pageButtonsPanel.Controls.Add(loginButton);
+            pageButtonsPanel.Controls.Add(rememberMeCheckbox);
             pageButtonsPanel.Controls.Add(revokeAccessButton);
             pageButtonsPanel.Controls.Add(mergingPageButton);
             pageButtonsPanel.Controls.Add(branchesPageButton);
@@ -111,6 +117,66 @@ namespace GitVisualizer.UI.UI_Forms
             pageButtonsPanel.Size = new Size(1184, 47);
             pageButtonsPanel.TabIndex = 4;
             // 
+            // settingsButton
+            // 
+            settingsButton.FlatStyle = FlatStyle.Flat;
+            settingsButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            settingsButton.Location = new Point(392, 7);
+            settingsButton.Name = "settingsButton";
+            settingsButton.Size = new Size(120, 32);
+            settingsButton.TabIndex = 14;
+            settingsButton.Text = "Settings";
+            navigationTooltip.SetToolTip(settingsButton, "Shows the app's settings");
+            settingsButton.UseVisualStyleBackColor = true;
+            settingsButton.Click += SettingsButton_Click;
+            // 
+            // loginButton
+            // 
+            loginButton.FlatStyle = FlatStyle.Flat;
+            loginButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            loginButton.Location = new Point(853, 9);
+            loginButton.Name = "loginButton";
+            loginButton.Size = new Size(156, 31);
+            loginButton.TabIndex = 13;
+            loginButton.Text = "Login";
+            navigationTooltip.SetToolTip(loginButton, "Be redirected to setup if user needs to login. Otherwise, it will show the currently logged in user.");
+            loginButton.UseCompatibleTextRendering = true;
+            loginButton.UseVisualStyleBackColor = true;
+            loginButton.Click += LoginButton_Click;
+            loginButton.MouseEnter += LoginButton_MouseEnter;
+            loginButton.MouseLeave += LoginButton_MouseLeave;
+            // 
+            // rememberMeCheckbox
+            // 
+            rememberMeCheckbox.AutoSize = true;
+            rememberMeCheckbox.Checked = true;
+            rememberMeCheckbox.CheckState = CheckState.Checked;
+            rememberMeCheckbox.Font = new Font("Segoe UI", 16F, FontStyle.Regular, GraphicsUnit.Point);
+            rememberMeCheckbox.Location = new Point(670, 7);
+            rememberMeCheckbox.Name = "rememberMeCheckbox";
+            rememberMeCheckbox.Size = new Size(177, 34);
+            rememberMeCheckbox.TabIndex = 12;
+            rememberMeCheckbox.Text = "Remember Me";
+            navigationTooltip.SetToolTip(rememberMeCheckbox, "Checks whether the app should remember your access token.");
+            rememberMeCheckbox.UseVisualStyleBackColor = true;
+            rememberMeCheckbox.CheckedChanged += RememberMeCheckboxChanged;
+            // 
+            // revokeAccessButton
+            // 
+            revokeAccessButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            revokeAccessButton.BackColor = Color.Pink;
+            revokeAccessButton.FlatStyle = FlatStyle.Flat;
+            revokeAccessButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            revokeAccessButton.ForeColor = Color.Crimson;
+            revokeAccessButton.Location = new Point(1015, 9);
+            revokeAccessButton.Name = "revokeAccessButton";
+            revokeAccessButton.Size = new Size(157, 30);
+            revokeAccessButton.TabIndex = 9;
+            revokeAccessButton.Text = "Revoke Github Access";
+            navigationTooltip.SetToolTip(revokeAccessButton, "Revoke access of your credentials to Github, so you will need to login again next time");
+            revokeAccessButton.UseVisualStyleBackColor = false;
+            revokeAccessButton.Click += RevokeAccessButton_Click;
+            // 
             // buttonsMenuPanel
             // 
             buttonsMenuPanel.Controls.Add(pageButtonsPanel);
@@ -119,21 +185,6 @@ namespace GitVisualizer.UI.UI_Forms
             buttonsMenuPanel.Name = "buttonsMenuPanel";
             buttonsMenuPanel.Size = new Size(1184, 47);
             buttonsMenuPanel.TabIndex = 5;
-            // 
-            // revokeAccessButton
-            // 
-            revokeAccessButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            revokeAccessButton.Enabled = false;
-            revokeAccessButton.FlatStyle = FlatStyle.Flat;
-            revokeAccessButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
-            revokeAccessButton.Location = new Point(1015, 9);
-            revokeAccessButton.Name = "revokeAccessButton";
-            revokeAccessButton.Size = new Size(157, 30);
-            revokeAccessButton.TabIndex = 9;
-            revokeAccessButton.Text = "Revoke Github Access";
-            navigationTooltip.SetToolTip(revokeAccessButton, "Revoke access of your credentials to Github, so you will need to login again next time");
-            revokeAccessButton.UseVisualStyleBackColor = true;
-            revokeAccessButton.Click += revokeAccessButton_Click;
             // 
             // MainForm
             // 
@@ -145,9 +196,11 @@ namespace GitVisualizer.UI.UI_Forms
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "GitVisualizer - No active repo selected";
-            Load += MainFormLoad;
+            Activated += MainForm_Activated;
+            FormClosing += MainForm_FormClosing;
             ((System.ComponentModel.ISupportInitialize)githubBindingSource).EndInit();
             pageButtonsPanel.ResumeLayout(false);
+            pageButtonsPanel.PerformLayout();
             buttonsMenuPanel.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -175,5 +228,8 @@ namespace GitVisualizer.UI.UI_Forms
         private Panel buttonsMenuPanel;
         private Button revokeAccessButton;
         private ToolTip navigationTooltip;
+        private CheckBox rememberMeCheckbox;
+        private Button loginButton;
+        private Button settingsButton;
     }
 }

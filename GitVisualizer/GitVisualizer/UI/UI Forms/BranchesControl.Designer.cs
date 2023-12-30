@@ -19,7 +19,7 @@
             }
             base.Dispose(disposing);
         }
-        private void ApplyColorTheme(UITheme.AppTheme theme)
+        public void ApplyColorTheme(UITheme.AppTheme theme)
         {
             BackColor = theme.AppBackground;
             ForeColor = theme.TextSoft;
@@ -286,7 +286,7 @@
             branchesGridView.ShowEditingIcon = false;
             branchesGridView.Size = new Size(895, 521);
             branchesGridView.TabIndex = 3;
-            branchesGridView.CellClick += branchesGridView_CellContentClick;
+            branchesGridView.CellClick += BranchesGridView_CellContentClick;
             branchesGridView.CellPainting += BranchesGridViewDrawCell;
             // 
             // graphColumn

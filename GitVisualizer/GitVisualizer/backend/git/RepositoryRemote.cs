@@ -1,17 +1,20 @@
 ﻿namespace GitVisualizer;
 
-public class RepositoryRemote : Repository
+/// <summary>
+/// The class representing a remote repository.
+/// </summary>
+public class RepositoryRemote(string title, string cloneURL, string webURL) : Repository(title)
 {
-    //public RepositoryLocal? localRepository { get; private set; }
 
-    public string cloneURL { get; private set; }
-    public string webURL { get; private set; }
+    /// <summary>
+    /// Gets or sets the clone url.
+    /// </summary>
+    public string CloneURL { get; private set; } = cloneURL;
 
-    public RepositoryRemote(string title, string cloneURL, string webURL) : base(title)
-    {
-        this.cloneURL = cloneURL;
-        this.webURL = webURL;
-    }
+    /// <summary>
+    /// Gets or sets the web url.
+    /// </summary>
+    public string WebURL { get; private set; } = webURL;
 
     /*
     public void setLocalRepo(RepositoryLocal localRepository)

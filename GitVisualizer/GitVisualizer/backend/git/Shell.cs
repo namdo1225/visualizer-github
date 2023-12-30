@@ -1,56 +1,74 @@
 using System.Management.Automation;
 using System.Collections.ObjectModel;
-using System.Management.Automation.Runspaces;
+using GitVisualizer.UI.UI_Forms;
 
-
-public static class Shell
+namespace GitVisualizer.backend.git
 {
 
-    /// <summary> persistent shell instance for running commands </summary>
-    private static PowerShell iShell;
-
-    static Shell()
+    /// <summary>
+    /// The class providing PowerShell functionalities.
+    /// </summary>
+    public static class Shell
     {
-        iShell = PowerShell.Create();
-    }
+        /// <summary> persistent shell instance for running commands </summary>
+        private static readonly PowerShell iShell;
 
-    /// <summary> synchronously executes the given command returns the result struct </summary>
-    public static ShellComRes exec(string command)
-    {
-        // TODO async shell command queue
-        try
+        /// <summary>
+        /// The Shell constructor.
+        /// </summary>
+        static Shell()
         {
-            iShell.Commands.Clear();
-            iShell.AddScript(command);
-            Collection<PSObject> psObjects = iShell.Invoke();
-            bool success = !iShell.HadErrors;
-            string? errmsg = null;
-            if (!success)
+            iShell = PowerShell.Create();
+        }
+
+        /// <summary>
+        /// Synchronously executes the given command returns the result struct
+        /// </summary>
+        /// <param name="command">The command to execute.</param>
+        /// <returns>The result of the command.</returns>
+        public static ShellComRes Exec(string command)
+        {
+            // TODO async shell command queue
+            try
             {
-                ErrorRecord err = iShell.Streams.Error[0];
-                errmsg = err.ToString();
-                iShell.Streams.Error.Clear();
+                iShell.Commands.Clear();
+                iShell.AddScript(command);
+                Collection<PSObject> psObjects = iShell.Invoke();
+                bool success = !iShell.HadErrors;
+                string? errmsg = null;
+                if (!success)
+                {
+                    ErrorRecord err = iShell.Streams.Error[0];
+                    errmsg = err.ToString();
+                    iShell.Streams.Error.Clear();
+                    MainForm.OpenDialog(errmsg);
+                }
+                return new ShellComRes(success, errmsg: errmsg, psObjects: psObjects);
             }
-            return new ShellComRes(success, errmsg: errmsg, psObjects: psObjects);
-        }
-        catch (Exception e)
-        {
-            string errmsg = e.ToString();
-            return new ShellComRes(success: false, errmsg: errmsg, psObjects: null);
+            catch (Exception e)
+            {
+                string errmsg = e.ToString();
+                return new ShellComRes(success: false, errmsg: errmsg, psObjects: null);
+            }
         }
     }
-}
 
-/// <summary> class used to represent the results of a shell command</summary>
-public class ShellComRes
-{
-    public bool success { get; private set; }
-    public string? errmsg { get; private set; }
-    public Collection<PSObject>? psObjects { get; private set; }
-    public ShellComRes(bool success, string? errmsg, Collection<PSObject>? psObjects)
+    /// <summary> Class used to represent the results of a shell command</summary>
+    public class ShellComRes(bool success, string? errmsg, Collection<PSObject>? psObjects)
     {
-        this.success = success;
-        this.errmsg = errmsg;
-        this.psObjects = psObjects;
+        /// <summary>
+        /// Whether the command execution is successful.
+        /// </summary>
+        public bool Success { get; private set; } = success;
+
+        /// <summary>
+        /// Gets or Sets the error message of the command.
+        /// </summary>
+        public string? Errmsg { get; private set; } = errmsg;
+
+        /// <summary>
+        /// Gets or Sets the Powershell objects.
+        /// </summary>
+        public Collection<PSObject>? PsObjects { get; private set; } = psObjects;
     }
 }

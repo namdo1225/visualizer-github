@@ -1,29 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Diagnostics;
 
 using GithubSpace;
+using GitVisualizer.backend;
 
 namespace GitVisualizer.UI.UI_Forms
 {
+    /// <summary>
+    /// Class for repositories control UI.
+    /// </summary>
     public partial class RepositoriesControl : UserControl
     {
-        private Github githubAPI;
-        private Tuple<RepositoryLocal?, RepositoryRemote?> selectedRepo = new Tuple<RepositoryLocal?, RepositoryRemote?>(null, null);
+        private Tuple<RepositoryLocal?, RepositoryRemote?> selectedRepo = new(null, null);
         private List<Tuple<RepositoryLocal?, RepositoryRemote?>> allRepos = new();
 
-
-
+        /// <summary>
+        /// The RepositoriesControl constructor.
+        /// </summary>
         public RepositoriesControl()
         {
-            githubAPI = Program.Github;
             InitializeComponent();
             ApplyColorTheme(MainForm.AppTheme);
         }
@@ -36,19 +30,14 @@ namespace GitVisualizer.UI.UI_Forms
         /// <param name="e"></param>
         public void EnterControl()
         {
-            //GetLocalRepositoriesData();
-            //GetRemoteRepositoriesData();
-            //AddReposToTable();
-            GitAPI.Scanning.scanForAllRepos(UpdateGridCallback);
+            GitAPI.Scanning.ScanForAllRepos(UpdateGridCallback);
         }
 
-
-
+        /// <summary>
+        /// The update grid callback handler.
+        /// </summary>
         public void UpdateGridCallback()
         {
-            Debug.WriteLine("UpdateGridCallback()");
-            //AddReposToTable();
-
             Invoke(AddReposToTable);
         }
 
@@ -59,114 +48,204 @@ namespace GitVisualizer.UI.UI_Forms
         {
             Program.MainForm.UpdateAppTitle();
 
-            Debug.WriteLine("AddReposToTable()");
-            allRepos = GitAPI.Getters.getAllRepositories();
+            allRepos = GitAPI.Getters.GetAllRepositories();
 
-            if (GitAPI.liveRepository != null)
+            if (GitAPI.LiveRepository != null)
             {
-                activeRepositoryTextLabel.Text = GitAPI.liveRepository.title;
+                activeRepositoryTextLabel.Text = GitAPI.LiveRepository.Title;
                 activeRepositoryTextLabel.ForeColor = MainForm.AppTheme.TextBright;
             }
 
-
-            //repositoriesGridView.Rows.Clear();
             repositoriesGridView.Columns.Clear();
-            repositoriesGridView.DataSource = null;
             repositoriesGridView.DataSource = allRepos;
             repositoriesGridView.Columns[0].HeaderCell.Value = "Local Repositories";
             repositoriesGridView.Columns[1].HeaderCell.Value = "Remote Repositories";
 
-            localRepoComboBox.DataSource = null;
-            localRepoComboBox.DataSource = GitAPI.Actions.LocalActions.getTrackedDirs();
+            localRepoComboBox.DataSource = GitAPI.Actions.LocalActions.GetTrackedDirs();
         }
 
-        private void repositoriesGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        /// <summary>
+        /// The repositories grid view_ cell content click.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The DataGridViewCellEventArgs.</param>
+        private void RepositoriesGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0) { return; }
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
 
             selectedRepo = (Tuple<RepositoryLocal?, RepositoryRemote?>)repositoriesGridView.Rows[e.RowIndex].DataBoundItem;
-            if (selectedRepo == null) { return; }
+            if (selectedRepo == null)
+                return;
+
             // If local exists
             if (selectedRepo.Item1 != null)
             {
-                localRepoButtonsLabel.Text = "Local: " + selectedRepo.Item1.title;
+                localRepoButtonsLabel.Text = $"Local: {selectedRepo.Item1.Title}";
                 cloneToLocalButton.Visible = false;
-                setAsActiveRepoButton.Visible = true;
-                openInFileExplorerButton.Visible = true;
+                setAsActiveRepoButton.Visible = openInFileExplorerButton.Visible = deleteLocalRepoButton.Visible = true;
             }
             else
             {
                 localRepoButtonsLabel.Text = "No Local Repo, Need to Clone First!";
                 cloneToLocalButton.Visible = true;
-                setAsActiveRepoButton.Visible = false;
-                openInFileExplorerButton.Visible = false;
+                setAsActiveRepoButton.Visible = openInFileExplorerButton.Visible = deleteLocalRepoButton.Visible = false;
             }
 
             // If remote exists
             if (selectedRepo.Item2 != null)
             {
-                remoteRepoButtonsLabel.Text = "Remote: " + selectedRepo.Item2.title;
+                remoteRepoButtonsLabel.Text = $"Remote: {selectedRepo.Item2.Title}";
                 createNewRemoteRepoButton.Visible = false;
                 openOnGithubComButton.Visible = true;
+                deleteRemoteRepoButton.Visible = Github.DeleteRepoPermission;
             }
             else
             {
                 remoteRepoButtonsLabel.Text = "No Remote for This Local. Create New Remote Repo First.";
                 createNewRemoteRepoButton.Visible = true;
-                openOnGithubComButton.Visible = false;
+                openOnGithubComButton.Visible = deleteRemoteRepoButton.Visible = false;
             }
 
         }
 
+        /// <summary>
+        /// The create new local repo button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnCreateNewLocalRepoButton(object sender, EventArgs e)
         {
-            GitAPI.Actions.LocalActions.createLocalRepository(UpdateGridCallback);
+            GitAPI.Actions.LocalActions.CreateLocalRepository(UpdateGridCallback);
+            GitAPI.Scanning.ScanForAllRepos(UpdateGridCallback);
         }
 
+        /// <summary>
+        /// The open in file explorer button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnOpenInFileExplorerButton(object sender, EventArgs e)
         {
-            if (selectedRepo == null && selectedRepo.Item1 == null) { return; }
-            Process.Start("explorer.exe", selectedRepo.Item1.dirPath);
-
+            if (selectedRepo != null && selectedRepo.Item1 != null)
+                Process.Start("explorer.exe", selectedRepo.Item1.DirPath);
         }
+
+        /// <summary>
+        /// The track existing repos button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnTrackExistingReposButton(object sender, EventArgs e)
         {
-            GitAPI.Actions.LocalActions.userSelectTrackDirectory(true, UpdateGridCallback);
+            GitAPI.Actions.LocalActions.UserSelectTrackDirectory(true, UpdateGridCallback);
         }
 
+        /// <summary>
+        /// The clone to local button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnCloneToLocalButton(object sender, EventArgs e)
         {
-            if (selectedRepo == null && selectedRepo.Item2 == null) { return; }
-            GitAPI.Actions.RemoteActions.cloneRemoteRepository(selectedRepo.Item2, UpdateGridCallback);
+            if (selectedRepo != null && selectedRepo.Item2 != null)
+                GitAPI.Actions.RemoteActions.CloneRemoteRepository(selectedRepo.Item2, UpdateGridCallback);
         }
 
+        /// <summary>
+        /// The set as active repo button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnSetAsActiveRepoButton(object sender, EventArgs e)
         {
-            if (selectedRepo == null && selectedRepo.Item1 == null) { return; }
-            GitAPI.Actions.LocalActions.setLiveRepository(selectedRepo.Item1);
-            activeRepositoryTextLabel.Text = selectedRepo.Item1.title;
+            if (selectedRepo == null || selectedRepo.Item1 == null)
+                return;
+
+            GitAPI.Actions.LocalActions.SetLiveRepository(selectedRepo.Item1);
+            activeRepositoryTextLabel.Text = selectedRepo.Item1.Title;
             activeRepositoryTextLabel.ForeColor = MainForm.AppTheme.TextBright;
             Program.MainForm.UpdateAppTitle();
         }
 
+        /// <summary>
+        /// The open on github button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnOpenOnGithubComButton(object sender, EventArgs e)
         {
-            if (selectedRepo == null && selectedRepo.Item2 == null) { return; }
-            Process.Start(new ProcessStartInfo { FileName = selectedRepo.Item2.webURL, UseShellExecute = true });
-
+            if (selectedRepo != null && selectedRepo.Item2 != null)
+                Process.Start(new ProcessStartInfo { FileName = selectedRepo.Item2.WebURL, UseShellExecute = true });
         }
 
+        /// <summary>
+        /// The create new remote repo button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnCreateNewRemoteRepoButton(object sender, EventArgs e)
         {
-            GitAPI.Actions.RemoteActions.createRemoteRepository(selectedRepo.Item1, UpdateGridCallback);
+            GitAPI.Actions.RemoteActions.CreateRemoteRepository(selectedRepo.Item1, UpdateGridCallback);
         }
 
-
+        /// <summary>
+        /// The untrack repos button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
         private void OnUntrackReposButton(object sender, EventArgs e)
         {
-            LocalTrackedDir tracked = localRepoComboBox.SelectedItem as LocalTrackedDir;
-            if (tracked == null) { return; }
-            GitAPI.Actions.LocalActions.untrackDirectory(tracked, UpdateGridCallback);
+            if (localRepoComboBox.SelectedItem is LocalTrackedDir tracked)
+                GitAPI.Actions.LocalActions.UntrackDirectory(tracked, UpdateGridCallback);
+        }
+
+        /// <summary>
+        /// The rescan button click handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
+        private void RescanButton_Click(object sender, EventArgs e)
+        {
+            GitAPI.Scanning.ScanForAllRepos(UpdateGridCallback);
+        }
+
+        /// <summary>
+        /// The repositories control panel paint handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The PaintEventArgs.</param>
+        private void RepositoriesControlPanel_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        /// The delete local repo button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
+        private void DeleteLocalRepo_Click(object sender, EventArgs e)
+        {
+            bool result = GitAPI.Actions.LocalActions.DeleteRepo(selectedRepo.Item1);
+            if (result)
+            {
+                GitAPI.Actions.LocalActions.UntrackDirectory(null, UpdateGridCallback, selectedRepo.Item1.DirPath);
+                localRepoComboBox.DataSource = GitAPI.Actions.LocalActions.GetTrackedDirs();
+                GitAPI.Scanning.ScanForAllRepos(UpdateGridCallback);
+            }
+        }
+
+        /// <summary>
+        /// The delete remote repo button handler.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
+        private async void DeleteRemoteRepo_Click(object sender, EventArgs e)
+        {
+            bool result = await Github.DeleteRemoteRepo(selectedRepo.Item2.WebURL);
+            if (result)
+                GitAPI.Scanning.ScanForAllRepos(UpdateGridCallback);
         }
     }
 }

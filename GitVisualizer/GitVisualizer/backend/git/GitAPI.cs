@@ -1,32 +1,33 @@
 using System.Diagnostics;
-using System.Management.Automation.Runspaces;
-using System.Text.Json;
-using System;
-using System.Runtime.InteropServices;
-using System;
-using System.Drawing;
-using System.Windows.Forms;
-using System.IO;
 using System.Management.Automation;
-using GitVisualizer.UI.UI_Forms;
-using System.Windows.Forms.VisualStyles;
 using System.Text.RegularExpressions;
+using GithubSpace;
+using GitVisualizer.backend;
+using GitVisualizer.backend.git;
+using GitVisualizer.UI.UI_Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace GitVisualizer;
 
+/// <summary>
+/// The class containing methods to use various Git functionalities.
+/// </summary>
 public static class GitAPI
 {
 
-    public static Github github { get; set; }
+    /// <summary>
+    /// Gets or Sets the Github object.
+    /// </summary>
+    public static Github Github { get; set; }
 
     /// <summary> pointer to the live commit </summary>
-    public static Branch? liveBranch { get; private set; }
+    public static Branch? LiveBranch { get; private set; }
 
     /// <summary> currently checked out commit </summary>
-    public static Commit? liveCommit { get; private set; }
+    public static Commit? LiveCommit { get; private set; }
 
     /// <summary> currently tracked local repository </summary>
-    public static RepositoryLocal? liveRepository { get; private set; }
+    public static RepositoryLocal? LiveRepository { get; private set; }
 
     // url -> remoteRepo
     private static Dictionary<string, RepositoryRemote> remoteRepositories;
@@ -35,67 +36,74 @@ public static class GitAPI
     // url -> list<localRepo>
     private static Dictionary<string, HashSet<RepositoryLocal>> remoteBackedLocalRepositories;
 
-    public static int? commitsAhead { get; private set; } = 0;
-    public static int? commitsBehind { get; private set; } = 0;
+    /// <summary>
+    /// Gets or Sets the number of commits ahead.
+    /// </summary>
+    public static int? CommitsAhead { get; private set; } = 0;
+
+    /// <summary>
+    /// Gets or Sets the number of commits behind.
+    /// </summary>
+    public static int? CommitsBehind { get; private set; } = 0;
 
     /// <summary> GitAPI initialization </summary>
     static GitAPI()
     {
-        Debug.WriteLine("INITIALIZING GIT API");
-
         // ref to program GitHub api
-        github = Program.Github;
+        Github = Program.Github;
 
-        //
         remoteRepositories = new Dictionary<string, RepositoryRemote>();
         localRepositories = new Dictionary<string, RepositoryLocal>();
         remoteBackedLocalRepositories = new Dictionary<string, HashSet<RepositoryLocal>>();
     }
 
+    /// <summary>
+    /// The class for scanning functionalities.
+    /// </summary>
     public class Scanning
     {
-        public static void scanForLocalRepos(Action? callback)
+        /// <summary>
+        /// Scans for local repos.
+        /// </summary>
+        /// <param name="callback">The Action callback.</param>
+        public static void ScanForLocalRepos(Action? callback)
         {
             localRepositories.Clear();
             remoteBackedLocalRepositories.Clear();
-            Debug.WriteLine("scanDirs()");
-            foreach (LocalTrackedDir trackedDir in GVSettings.data.trackedLocalDirs)
+
+            foreach (LocalTrackedDir trackedDir in GVSettings.Data.TrackedLocalDirs)
             {
-                Debug.WriteLine($"scanning dir {trackedDir.path}");
-                string dirPath = trackedDir.path;
-                bool recursive = trackedDir.recursive;
+                string dirPath = trackedDir.Path;
+                bool recursive = trackedDir.Recursive;
                 SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
                 if (!Directory.Exists(dirPath))
-                {
                     continue;
-                }
+
                 string[] gitFolderPaths = Directory.GetDirectories(dirPath, ".git", searchOption);
                 foreach (string gitFolderPath in gitFolderPaths)
                 {
                     // getting parent folder of .git folder
                     DirectoryInfo? repoDirInfo = Directory.GetParent(gitFolderPath);
+
                     // skipping null info
                     if (repoDirInfo == null)
-                    {
                         continue;
-                    }
+
                     // getting repo folder abs path
                     string repoDirPath = repoDirInfo.FullName;
                     string repoName = repoDirInfo.Name;
-                    RepositoryLocal newLocalRepo = new RepositoryLocal(repoName, repoDirPath);
+                    RepositoryLocal newLocalRepo = new(repoName, repoDirPath);
 
                     // skipping already loaded local repos
-                    if (localRepositories.ContainsKey(newLocalRepo.dirPath))
-                    {
+                    if (localRepositories.ContainsKey(newLocalRepo.DirPath))
                         continue;
-                    }
-                    localRepositories[newLocalRepo.dirPath] = newLocalRepo;
+                    localRepositories[newLocalRepo.DirPath] = newLocalRepo;
+
                     // skipping remote refs for local only repos
-                    string? remoteURL = newLocalRepo.getRemoteURL();
+                    string? remoteURL = newLocalRepo.GetRemoteURL();
                     if (remoteURL == null)
-                    {
                         continue;
-                    }
                     if (remoteBackedLocalRepositories.ContainsKey(remoteURL))
                     {
                         // skipping already tracked remote backed local repos
@@ -106,200 +114,169 @@ public static class GitAPI
                     remoteBackedLocalRepositories[remoteURL] = [newLocalRepo];
                 }
             }
-            if (callback != null)
-            {
-                callback();
-            }
+            callback?.Invoke();
         }
 
-
-        //
-        public static async Task scanForRemoteReposAsync(Action? callback)
+        /// <summary>
+        /// Scans for remote repos.
+        /// </summary>
+        /// <param name="callback">The Action callback.</param>
+        /// <returns>The Task.</returns>
+        public static async Task ScanForRemoteReposAsync(Action? callback)
         {
-            Debug.WriteLine("scanRemotesAsync()");
-            List<RepositoryRemote>? newRemoteRepos = await github.ScanReposAsync();
+            List<RepositoryRemote>? newRemoteRepos = await Github.ScanReposAsync();
             if (newRemoteRepos != null)
             {
                 foreach (RepositoryRemote newRemoteRepo in newRemoteRepos)
                 {
                     // skipping already tracked remotes
-                    if (remoteRepositories.ContainsKey(newRemoteRepo.cloneURL))
-                    {
+                    if (remoteRepositories.ContainsKey(newRemoteRepo.CloneURL))
                         continue;
-                    }
-                    remoteRepositories[newRemoteRepo.cloneURL] = newRemoteRepo;
+                    remoteRepositories[newRemoteRepo.CloneURL] = newRemoteRepo;
                 }
             }
-            if (callback != null)
-            {
-                callback();
-            }
+            callback?.Invoke();
         }
 
-
-        //
-        public static async void scanForAllRepos(Action? callback)
+        /// <summary>
+        /// Scans for all repos.
+        /// </summary>
+        /// <param name="callback">The Action callback.</param>
+        public static async void ScanForAllRepos(Action? callback)
         {
-            Debug.WriteLine("scanAllAsync()");
             // loading local repositories
-            scanForLocalRepos(null);
+            ScanForLocalRepos(null);
             // loading remote repositories
-            await scanForRemoteReposAsync(null);
-            //
-            if (GVSettings.data.liveRepostoryPath != null)
+            await ScanForRemoteReposAsync(null);
+            if (GVSettings.Data.LiveRepostoryPath != null && LiveRepository == null && localRepositories.ContainsKey(GVSettings.Data.LiveRepostoryPath))
             {
-                if (liveRepository == null)
-                {
-                    if (localRepositories.ContainsKey(GVSettings.data.liveRepostoryPath))
-                    {
-                        RepositoryLocal curRepo = localRepositories[GVSettings.data.liveRepostoryPath];
-                        Actions.LocalActions.setLiveRepository(curRepo);
-                    }
-                }
+                RepositoryLocal curRepo = localRepositories[GVSettings.Data.LiveRepostoryPath];
+                Actions.LocalActions.SetLiveRepository(curRepo);
             }
-            //
-            if (callback != null)
-            {
-                callback();
-            }
+            callback?.Invoke();
         }
     }
 
-    /// <summary> Git Actions </summary>
+    /// <summary> The class for Git action functionalities </summary>
     public static class Actions
     {
+
+        /// <summary>
+        /// The class for Git remote action functionalities
+        /// </summary>
         public static class RemoteActions
         {
 
-            public static void untrackRemoteRepos(Action callback)
+            /// <summary>
+            /// Untrack remote repos.
+            /// </summary>
+            /// <param name="callback">The Action callback.</param>
+            public static void UntrackRemoteRepos(Action callback)
             {
                 remoteRepositories.Clear();
                 callback();
             }
 
-            public readonly static string description_deleteRemoteRepository = "";
-            public static void deleteRemoteRepository()
+            /// <summary>
+            /// Creates a remote repository.
+            /// </summary>
+            /// <param name="localRepo">The local repo data.</param>
+            /// <param name="callback">The callback.</param>
+            public static async void CreateRemoteRepository(RepositoryLocal localRepo, Action callback)
             {
-                // TODO delete
-            }
+                string cloneURL = await Github.CreateRepo(localRepo.Title);
+                if (cloneURL == null)
+                    return;
 
+                RepositoryLocal? curLiveRepo = LiveRepository;
+                LocalActions.SetLiveRepository(localRepo);
 
-            public readonly static string description_createRemoteRepository = "";
-            public static async void createRemoteRepository(RepositoryLocal localRepo, Action callback)
-            {
-                string cloneURL = await github.CreateRepo(localRepo.title);
-
-                RepositoryLocal? curLiveRepo = liveRepository;
-                LocalActions.setLiveRepository(localRepo);
-
-                Tuple<string?, string?> curShorthashAndBranch = Getters.getLiveCommitShortHashAndBranch();
+                Tuple<string?, string?> curShorthashAndBranch = Getters.GetLiveCommitShortHashAndBranch();
 
                 string? curShortHash = curShorthashAndBranch.Item1;
                 string? curBranchName = curShorthashAndBranch.Item2;
 
-                Debug.WriteLine($"createRemoteRepository IN PROGRESS cloneURL={cloneURL} curShortHash={curShortHash} curBranchName={curBranchName}");
-
                 if (cloneURL != null)
                 {
-                    string com = $"cd '{localRepo.dirPath}'; ";
-                    com += $"git remote add origin https://{cloneURL}.git; ";
+                    string com = $"cd '{localRepo.DirPath}'; git remote add origin https://{cloneURL}.git; ";
                     if (curBranchName != null)
-                    {
-                        com += $"git branch -M {curBranchName}; ";
-                        com += $"git push -u origin {curBranchName}; ";
-                    }
+                        com += $"git branch -M {curBranchName}; git push -u origin {curBranchName}; ";
                     else if (curShortHash != null)
-                    {
-                        com += $"git branch -M main; ";
-                        com += $"git push -u origin main; ";
-                    }
-                    ShellComRes comResult = Shell.exec(com);
+                        com += $"git branch -M main; git push -u origin main; ";
+                    Shell.Exec(com);
                 }
 
                 remoteBackedLocalRepositories.Clear();
                 localRepositories.Clear();
                 remoteRepositories.Clear();
 
-                Scanning.scanForAllRepos(callback);
+                Scanning.ScanForAllRepos(callback);
 
                 if (curLiveRepo != null)
-                {
                     foreach (KeyValuePair<string, RepositoryLocal> localrepoPair in localRepositories)
                     {
                         string repoPath = localrepoPair.Key;
-                        if (repoPath == curLiveRepo.dirPath)
-                        {
-                            LocalActions.setLiveRepository(localrepoPair.Value);
-                        }
+                        if (repoPath == curLiveRepo.DirPath)
+                            LocalActions.SetLiveRepository(localrepoPair.Value);
                     }
-                }
 
                 callback();
             }
 
-
-            public readonly static string description_addLocalBranchToRemote = "";
-            public static void addLocalBranchToRemote(Branch branch)
+            /// <summary>
+            /// Adds a local branch to remote repository.
+            /// </summary>
+            /// <param name="branch">The branch.</param>
+            public static void AddLocalBranchToRemote(Branch branch)
             {
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git push -u {branch.title}";
-                    ShellComRes comResult = Shell.exec(com);
+                    string com = $"cd '{LiveRepository.DirPath}'; git push -u {branch.Title}";
+                    Shell.Exec(com);
                 }
             }
 
-
-            public readonly static string description_deleteRemoteBranch = "";
-            public static void deleteRemoteBranch(Branch branch)
+            /// <summary>
+            /// Clones a remote repository.
+            /// </summary>
+            /// <param name="repositoryRemote">The repository remote.</param>
+            /// <param name="callback">The Action callback.</param>
+            public static void CloneRemoteRepository(RepositoryRemote repositoryRemote, Action? callback)
             {
-
-            }
-
-
-            public readonly static string description_cloneRemoteRepository = "";
-            public static void cloneRemoteRepository(RepositoryRemote repositoryRemote, Action? callback)
-            {
-                Debug.WriteLine("CLONING : " + repositoryRemote.cloneURL);
-                // TODO check that .git folder and repo exist
-                FolderBrowserDialog dialog = new FolderBrowserDialog();
+                FolderBrowserDialog dialog = new();
                 DialogResult fdResult = dialog.ShowDialog();
                 if (fdResult == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
                 {
                     string cloneDirPath = Path.GetFullPath(dialog.SelectedPath);
-                    string clonedRepoPath = cloneDirPath + "\\" + repositoryRemote.title;
-                    //
-                    string com = $"cd '{cloneDirPath}'; ";
-                    com += $"git clone https://{repositoryRemote.cloneURL}";
-                    ShellComRes comResult = Shell.exec(com);
-                    // TODO check for command success
-                    LocalActions.trackDirectory(clonedRepoPath, true, callback);
+                    string clonedRepoPath = cloneDirPath + "\\" + repositoryRemote.Title;
+                    string com = $"cd '{cloneDirPath}'; git clone https://{repositoryRemote.CloneURL}";
+
+                    Shell.Exec(com);
+
+                    LocalActions.TrackDirectory(clonedRepoPath, true, callback);
                 }
             }
 
-
-            public readonly static string description_sync = "";
-            public static void sync()
+            /// <summary>
+            /// Syncs a repository.
+            /// </summary>
+            public static void Sync()
             {
                 // fetch and pull
-                if (liveCommit != null)
+                if (LiveCommit != null)
                 {
-                    string com = $"cd '{liveCommit.localRepository.dirPath}'; ";
-                    com += $"git fetch --all";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
-                    com = $"cd '{liveCommit.localRepository.dirPath}'; ";
-                    com += $"git pull --all -p";
-                    result = Shell.exec(com);
-                    if (liveBranch != null)
+                    string com = $"cd '{LiveCommit?.LocalRepository?.DirPath}'; git fetch --all";
+                    Shell.Exec(com);
+
+                    com = $"cd '{LiveCommit?.LocalRepository?.DirPath}'; git pull --all -p";
+                    Shell.Exec(com);
+
+                    if (LiveBranch != null)
                     {
-                        // TODO check for command success
-                        com = $"cd '{liveCommit.localRepository.dirPath}'; ";
-                        com += $"git push origin {liveBranch.title}:{liveBranch.title}";
-                        result = Shell.exec(com);
-                        // TODO check for command success
+                        com = $"cd '{LiveCommit?.LocalRepository?.DirPath}'; git push origin {LiveBranch.Title}:{LiveBranch.Title}";
+                        Shell.Exec(com);
                     }
-                    Getters.setCommitsAheadAndBehind();
+                    Getters.SetCommitsAheadAndBehind();
                 }
             }
         }
@@ -308,299 +285,320 @@ public static class GitAPI
         /// <summary> actions on the local filesystem within the currently checked-out commit </summary>
         public static class LocalActions
         {
-
-            public readonly static string description_setLiveRepository = "";
-            public static void setLiveRepository(RepositoryLocal repositoryLocal)
+            /// <summary>
+            /// Sets a current live repository.
+            /// </summary>
+            /// <param name="repositoryLocal">The repository local.</param>
+            public static void SetLiveRepository(RepositoryLocal repositoryLocal)
             {
-                if (!ReferenceEquals(repositoryLocal, liveRepository))
+                if (!ReferenceEquals(repositoryLocal, LiveRepository))
                 {
                     // TODO check that .git folder and repo exist
-                    string com = $"cd '{repositoryLocal.dirPath}'; ";
-                    com += $"git init '{repositoryLocal.dirPath}'";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
-                    liveRepository = repositoryLocal;
+                    string com = $"cd '{repositoryLocal.DirPath}'; git init '{repositoryLocal.DirPath}'";
+
+                    Shell.Exec(com);
+
+                    LiveRepository = repositoryLocal;
                     // set commit to currently checked out repo commit
-                    Getters.getCommitsAndBranches();
+                    Getters.GetCommitsAndBranches();
                     // updating settings
-                    GVSettings.data.liveRepostoryPath = liveRepository.dirPath;
-                    GVSettings.saveSettings();
+                    GVSettings.Data.LiveRepostoryPath = LiveRepository.DirPath;
+                    GVSettings.SaveSettings();
                 }
-                Getters.setCommitsAheadAndBehind();
+                Getters.SetCommitsAheadAndBehind();
             }
 
-
-            public readonly static string description_checkoutCommit = "";
-            public static void checkoutCommit(Commit commit)
+            /// <summary>
+            /// Check out a commit
+            /// </summary>
+            /// <param name="commit">The commit.</param>
+            public static void CheckoutCommit(Commit commit)
             {
-                if (!ReferenceEquals(commit, liveCommit))
+                if (!ReferenceEquals(commit, LiveCommit))
                 {
                     // TODO check that commit exists
-                    string com = $"cd '{commit.localRepository.dirPath}'; ";
-                    com += $"git checkout {commit.longCommitHash}";
-                    ShellComRes result = Shell.exec(com);
+                    string com = $"cd '{commit?.LocalRepository?.DirPath}'; git checkout {commit?.LongCommitHash}";
+                    ShellComRes result = Shell.Exec(com);
                     // TODO check for command success
-                    liveCommit = commit;
-                    liveBranch = null;
+                    LiveCommit = commit;
+                    LiveBranch = null;
                 }
-                Getters.setCommitsAheadAndBehind();
+                Getters.SetCommitsAheadAndBehind();
             }
 
-
-            public readonly static string description_checkoutBranch = "";
-            public static void checkoutBranch(Branch branch)
+            /// <summary>
+            /// Checkout a branch.
+            /// </summary>
+            /// <param name="branch">The branch.</param>
+            public static void CheckoutBranch(Branch branch)
             {
-                if (!ReferenceEquals(branch.commit, liveCommit))
+                if (!ReferenceEquals(branch?.Commit, LiveCommit))
                 {
                     // TODO check that branch exists and points to a valid commit
-                    string com = $"cd '{branch.commit.localRepository.dirPath}'; ";
-                    com += $"git checkout {branch.title}";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
-                    liveCommit = branch.commit;
-                    liveBranch = branch;
+                    string com = $"cd '{branch?.Commit?.LocalRepository?.DirPath}'; git checkout {branch?.Title}";
+                    Shell.Exec(com);
+                    LiveCommit = branch?.Commit;
+                    LiveBranch = branch;
                 }
-                Getters.setCommitsAheadAndBehind();
+                Getters.SetCommitsAheadAndBehind();
             }
 
-
-            public readonly static string description_createLocalBranch = "";
-            public static Branch createLocalBranch(string title, Commit commit)
+            /// <summary>
+            /// Creates a local branch.
+            /// </summary>
+            /// <param name="title">The title.</param>
+            /// <param name="commit">The commit.</param>
+            /// <returns>The result.</returns>
+            public static Branch CreateLocalBranch(string title, Commit commit)
             {
                 // TODO check that branch does not exist
-                string com = $"cd '{commit.localRepository.dirPath}'; ";
-                com += $"git checkout -b {title} {commit.longCommitHash}";
-                ShellComRes result = Shell.exec(com);
-                // TODO check for command success
-                Branch branch = new Branch(title, commit);
+                string com = $"cd '{commit?.LocalRepository?.DirPath}'; git checkout -b {title} {commit?.LongCommitHash}";
+                Shell.Exec(com);
+                Branch branch = new(title, commit);
                 // TODO add new branch to global branch
-                liveCommit = branch.commit;
+                LiveCommit = branch.Commit;
                 return branch;
             }
 
-
-            public readonly static string description_deleteBranchLocal = "";
-            public static void deleteBranchLocal(Branch branch)
+            /// <summary>
+            /// Deletes local branch.
+            /// </summary>
+            /// <param name="branch">The branch.</param>
+            public static void DeleteBranchLocal(Branch branch)
             {
-                if (!ReferenceEquals(branch.commit, liveCommit))
+                if (!ReferenceEquals(branch.Commit, LiveCommit))
                 {
                     // TODO check that branch exists and points to a valid commit
-                    string com = $"cd '{branch.commit.localRepository.dirPath}'; ";
-                    com += $"git branch -D {branch.title}";
-                    ShellComRes result = Shell.exec(com);
+                    string com = $"cd '{branch?.Commit?.LocalRepository?.DirPath}'; git branch -D {branch?.Title}";
+                    Shell.Exec(com);
                     // TODO check for command success
-                    com = $"cd '{branch.commit.localRepository.dirPath}'; ";
-                    com += $"git push origin -d {branch.title}";
-                    result = Shell.exec(com);
+                    com = $"cd '{branch?.Commit?.LocalRepository?.DirPath}'; git push origin -d {branch?.Title}";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_merge = "";
-            public static void merge()
+            /// <summary>
+            /// Merge local branch.
+            /// </summary>
+            public static void Merge()
             {
 
             }
 
-
-            public readonly static string description_trackDirectory = "";
-            public static void trackDirectory(string dirPath, bool recursive, Action? callback)
+            /// <summary>
+            /// Tracks a directory.
+            /// </summary>
+            /// <param name="dirPath">The directory path.</param>
+            /// <param name="recursive">The recursive bool. Whether to analyze directories recursively.</param>
+            /// <param name="callback">The callback.</param>
+            public static void TrackDirectory(string dirPath, bool recursive, Action? callback)
             {
-                foreach (LocalTrackedDir trackedDir in GVSettings.data.trackedLocalDirs)
+                foreach (LocalTrackedDir trackedDir in GVSettings.Data.TrackedLocalDirs)
                 {
-                    if (trackedDir.path == dirPath)
+                    if (trackedDir.Path == dirPath)
                     {
-                        trackedDir.recursive = recursive;
+                        trackedDir.Recursive = recursive;
                         return;
                     }
                 }
-                LocalTrackedDir newTrackedDir = new LocalTrackedDir(dirPath, recursive);
-                GVSettings.data.trackedLocalDirs.Add(newTrackedDir);
-                GVSettings.saveSettings();
-                Scanning.scanForLocalRepos(callback);
+                LocalTrackedDir newTrackedDir = new(dirPath, recursive);
+                GVSettings.Data.TrackedLocalDirs.Add(newTrackedDir);
+                GVSettings.SaveSettings();
+                Scanning.ScanForLocalRepos(callback);
             }
 
-            public readonly static string description_untrackDirectory = "";
-            public static void untrackDirectory(LocalTrackedDir trackedDir, Action? callback)
+            /// <summary>
+            /// Untracks a directory.
+            /// </summary>
+            /// <param name="trackedDir">The tracked directory.</param>
+            /// <param name="callback">The Action callback.</param>
+            public static void UntrackDirectory(LocalTrackedDir? trackedDir, Action? callback, String? path = null)
             {
-                Debug.WriteLine($"UNTRACKING {trackedDir.path}");
-                if (GVSettings.data.trackedLocalDirs.Contains(trackedDir))
-                {
-                    Debug.WriteLine($"UNTRACKING CONTAINS {trackedDir.path}");
-                    GVSettings.data.trackedLocalDirs.Remove(trackedDir);
+                if (trackedDir != null && GVSettings.Data.TrackedLocalDirs.Contains(trackedDir))
+                    GVSettings.Data.TrackedLocalDirs.Remove(trackedDir);
+                else if (path != null) {
+                    List<LocalTrackedDir> dirsByPath = GVSettings.Data.TrackedLocalDirs.Where(p => p.Path == path).ToList();
+                    foreach (LocalTrackedDir dir in dirsByPath)
+                        if (dir != null)
+                            GVSettings.Data.TrackedLocalDirs.Remove(dir);
                 }
-                GVSettings.saveSettings();
-                Scanning.scanForLocalRepos(callback);
+
+                GVSettings.SaveSettings();
+                Scanning.ScanForLocalRepos(callback);
             }
 
-            public readonly static string description_userSelectTrackDirectory = "";
-            public static void userSelectTrackDirectory(bool recursive, Action? callback)
+            /// <summary>
+            /// User selects to track a directory.
+            /// </summary>
+            /// <param name="recursive">The recursive bool. Whether to analyze directory recursively.</param>
+            /// <param name="callback">The Action callback.</param>
+            public static void UserSelectTrackDirectory(bool recursive, Action? callback)
             {
-                FolderBrowserDialog dialog = new FolderBrowserDialog();
+                FolderBrowserDialog dialog = new();
                 DialogResult result = dialog.ShowDialog();
                 if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
                 {
                     string fullPath = Path.GetFullPath(dialog.SelectedPath);
-                    trackDirectory(fullPath, recursive, callback);
+                    TrackDirectory(fullPath, recursive, callback);
                 }
             }
 
-            public readonly static string description_getTrackedDirs = "";
-            public static List<LocalTrackedDir> getTrackedDirs()
+            /// <summary>
+            /// Gets tracked directories.
+            /// </summary>
+            /// <returns>The List of Locally Tracked directories.</returns>
+            public static List<LocalTrackedDir> GetTrackedDirs()
             {
-                return GVSettings.data.trackedLocalDirs;
-                //List<string> trackedDirs = GVSettings.data.trackedLocalDirs.Select(o => o.path).ToList();
-                //return trackedDirs;
+                return GVSettings.Data.TrackedLocalDirs;
             }
 
-            public readonly static string description_createLocalRepository = "";
-            public static void createLocalRepository(Action? callback)
+            /// <summary>
+            /// Creates a local repository.
+            /// </summary>
+            /// <param name="callback">The Action callback.</param>
+            public static void CreateLocalRepository(Action? callback)
             {
                 // TODO check that .git folder and repo exist
-                FolderBrowserDialog dialog = new FolderBrowserDialog();
+                FolderBrowserDialog dialog = new();
                 DialogResult fdResult = dialog.ShowDialog();
                 if (fdResult == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
                 {
                     string repoDirPath = Path.GetFullPath(dialog.SelectedPath);
                     string? repoName = Path.GetDirectoryName(repoDirPath);
                     if (repoName == null)
-                    {
                         return;
-                    }
-                    //
-                    string com = $"cd '{repoDirPath}'; ";
-                    com += $"git init --initial-branch=main; git add -A; git commit -m 'initalizing {repoName}'";
-                    ShellComRes comResult = Shell.exec(com);
-                    // TODO check for command success
-                    trackDirectory(repoDirPath, true, callback);
+
+                    string com = $"cd '{repoDirPath}'; git init --initial-branch=main; git add -A; git commit -m 'initalizing {repoName}'";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_clean = "";
-            public static void clean()
+            /// <summary>
+            /// Performs the git clean command.
+            /// </summary>
+            public static void Clean()
             {
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git clean -fdx";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
+                    string com = $"cd '{LiveRepository.DirPath}'; git clean -fdx";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_stageChanges = "";
-            public static void stageChange(string fpath)
+            /// <summary>
+            /// Stages changes.
+            /// </summary>
+            /// <param name="fpath">The file path.</param>
+            public static void StageChange(string fpath)
             {
                 // stage file changes to commit
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git add '{fpath}'";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
-                    Debug.WriteLine($"stageChange successful={result.success} fpath=${fpath} dirpath={liveRepository.dirPath} errmsg={result.errmsg}");
-                    if (result.psObjects != null)
-                    {
-                        foreach (PSObject pso in result.psObjects)
-                        {
-                            Debug.WriteLine(pso.ToString());
-                        }
-                    }
+                    string com = $"cd '{LiveRepository.DirPath}'; git add '{fpath}'";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_unStageChanges = "";
-            public static void unStageChange(string fpath)
+            /// <summary>
+            /// Unstages changes.
+            /// </summary>
+            /// <param name="fpath">The file path.</param>
+            public static void UnStageChange(string fpath)
             {
                 // unstage file changes to commit
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git reset '{fpath}'";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
-                    Debug.WriteLine($"unStageChange successful={result.success}");
-                    if (result.psObjects != null)
-                    {
-                        foreach (PSObject pso in result.psObjects)
-                        {
-                            Debug.WriteLine(pso.ToString());
-                        }
-                    }
-
+                    string com = $"cd '{LiveRepository.DirPath}'; git reset '{fpath}'";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_commitStagedChanges = "";
-            public static void commitStagedChanges(string message)
+            /// <summary>
+            /// Commits staged changes.
+            /// </summary>
+            /// <param name="message">The message for the commit.</param>
+            public static void CommitStagedChanges(string message)
             {
                 // unstage all staged changes
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    Debug.Write($"COMMITTING : message={message}");
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git commit -m '{message}'";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
+                    string com = $"cd '{LiveRepository.DirPath}'; git commit -m '{message}'";
+                    Shell.Exec(com);
                 }
-                Getters.setCommitsAheadAndBehind();
+                Getters.SetCommitsAheadAndBehind();
             }
 
-            public readonly static string description_unstageAllStagedChanges = "";
-            public static void unstageAllStagedChanges()
+            /// <summary>
+            /// Unstages all staged changes.
+            /// </summary>
+            public static void UnstageAllStagedChanges()
             {
                 // unstage all staged changes
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git reset";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
+                    string com = $"cd '{LiveRepository.DirPath}'; git reset";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_stageAllUnstagedChanges = "";
-            public static void stageAllUnstagedChanges()
+            /// <summary>
+            /// Stages all unstaged changes.
+            /// </summary>
+            public static void StageAllUnstagedChanges()
             {
                 // stage all changed files
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git add -u";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
+                    string com = $"cd '{LiveRepository.DirPath}'; git add -u";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_revertUnstagedChange = "";
-            public static void revertUnstagedChange(string fpath)
+            /// <summary>
+            /// Reverts an unstaged change.
+            /// </summary>
+            /// <param name="fpath">The file path.</param>
+            public static void RevertUnstagedChange(string fpath)
             {
                 // reset file to state without any changes
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git checkout '{fpath}'";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
+                    string com = $"cd '{LiveRepository.DirPath}'; git checkout '{fpath}'";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_revertAllUnstagedChanges = "";
-            public static void revertAllUnstagedChanges()
+            /// <summary>
+            /// Reverts all unstaged changes.
+            /// </summary>
+            public static void RevertAllUnstagedChanges()
             {
                 // reset file to state without any changes
-                if (liveRepository != null)
+                if (LiveRepository != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git checkout .";
-                    ShellComRes result = Shell.exec(com);
-                    // TODO check for command success
+                    string com = $"cd '{LiveRepository.DirPath}'; git checkout .";
+                    Shell.Exec(com);
                 }
             }
 
-            public readonly static string description_undoLastCommit = "";
-            public static void undoLastCommit()
+            /// <summary>
+            /// Undo last commit.
+            /// </summary>
+            public static void UndoLastCommit()
             {
-                // 
+            }
+
+            /// <summary>
+            /// The delete repo.
+            /// </summary>
+            /// <param name="localRepo">The local repo.</param>
+            /// <returns>The result.</returns>
+            public static bool DeleteRepo(RepositoryLocal localRepo)
+            {
+                string repoDirPath = localRepo.DirPath;
+                string com = $"rm '{repoDirPath}' -r -force";
+                ShellComRes result = Shell.Exec(com);
+                return result.Success;
             }
         }
     }
@@ -609,107 +607,77 @@ public static class GitAPI
     public static class Getters
     {
 
-        public static List<Tuple<string, string>> getFileDiff(string fpath, bool isStaged)
+        /// <summary>
+        /// Retrieves file differences.
+        /// </summary>
+        /// <param name="fpath">The file path.</param>
+        /// <param name="isStaged">A bool for whether files are staged or not.</param>
+        /// <returns>The result.</returns>
+        public static List<Tuple<string, string>> GetFileDiff(string fpath, bool isStaged)
         {
-            Debug.WriteLine("getFileDiff : " + fpath);
             // assumes valid fpath
-            if (liveRepository == null)
-            {
-                Debug.WriteLine("getFileDiff : liveRepository IS NULL");
+            if (LiveRepository == null)
                 return new();
-            }
+
             string stagedFlag = isStaged ? "--staged" : "";
-            string com = $"cd '{liveRepository.dirPath}'; ";
-            com += $"git diff {stagedFlag} '{fpath}'; ";
-            ShellComRes result = Shell.exec(com);
-            if (result.psObjects == null)
-            {
-                Debug.WriteLine("getFileDiff : PS OBJECTS IS NULL");
+            string com = $"cd '{LiveRepository.DirPath}'; git diff {stagedFlag} '{fpath}';";
+            ShellComRes result = Shell.Exec(com);
+            if (result.PsObjects == null)
                 return new();
-            }
-            Debug.WriteLine("getFileDiff : converting diff lines to string list");
-            List<string> diffLines = result.psObjects.Select(s => s.ToString()).ToList();
-            //List<string> diffOld = new();
-            //List<string> diffNew = new();
+
+            List<string> diffLines = result.PsObjects.Select(s => s.ToString()).ToList();
             List<Tuple<string, string>> diff = new();
 
-            foreach (string line in diffLines)
-            {
-                Debug.WriteLine("DIFF LINE : " + line);
-            }
-
-            Debug.WriteLine("getFileDiff : removing diff header");
             int i = 0;
             // stripping command output header
             foreach (string line in diffLines)
             {
                 if (line[0].Equals('@'))
-                {
                     break;
-                }
                 i++;
             }
+
             for (int j = 0; j < i; j++)
             {
                 string line = diffLines[0];
                 diffLines.RemoveAt(0);
-                Debug.WriteLine("DIFF REMOVING HEADER LINE : " + line);
             }
             // building new and old
             foreach (string line in diffLines)
             {
                 if (line[0].Equals('-'))
-                {
                     diff.Add(new("\n", line));
-                    /*
-                    diffNew.Add("\n#");
-                    diffOld.Add(line);
-                    */
-                }
                 else if (line[0].Equals('+'))
-                {
                     diff.Add(new(line, "\n"));
-                    /*
-                    diffNew.Add(line);
-                    diffOld.Add("\n#");
-                    */
-                }
                 else
-                {
                     diff.Add(new(line, line));
-                    /*
-                    diffNew.Add(line);
-                    diffOld.Add(line);
-                    */
-                }
             }
             return diff;
         }
 
-        public static List<Tuple<string, string>> getStagedFiles()
+        /// <summary>
+        /// Gets staged files.
+        /// </summary>
+        /// <returns>The List of files.</returns>
+        public static List<Tuple<string, string>> GetStagedFiles()
         {
             // list<tuple<action,fpath>>
-            if (liveRepository != null)
+            if (LiveRepository != null)
             {
-                string com = $"cd '{liveRepository.dirPath}'; ";
-                com += $"git diff --cached --name-status";
-                ShellComRes result = Shell.exec(com);
-                if (result.psObjects == null)
-                {
+                string com = $"cd '{LiveRepository.DirPath}'; git diff --cached --name-status";
+                ShellComRes result = Shell.Exec(com);
+
+                if (result.PsObjects == null)
                     return new();
-                }
+
                 // action(add,del,mod), fpath
                 List<Tuple<string, string>> changes = new();
-                foreach (PSObject pso in result.psObjects)
+                foreach (PSObject pso in result.PsObjects)
                 {
                     string line = pso.ToString().Trim();
                     // line : eventNameChar     fpath
                     string action = line[0].ToString().ToUpper();
                     string fpath = line[1..].Trim();
-                    Debug.WriteLine("GOT STAGED CHANGE");
-                    Debug.WriteLine("LINE : " + line);
-                    Debug.WriteLine("ACTION : " + action);
-                    Debug.WriteLine("FPATH : " + fpath);
                     changes.Add(new Tuple<string, string>(action, fpath));
                 }
                 return changes;
@@ -717,21 +685,23 @@ public static class GitAPI
             return new();
         }
 
-        public static List<Tuple<string, string>> getUnStagedFiles()
+        /// <summary>
+        /// Gets unstaged files.
+        /// </summary>
+        /// <returns>The List of files.</returns>
+        public static List<Tuple<string, string>> GetUnStagedFiles()
         {
             // list<tuple<action,fpath>>
-            if (liveRepository != null)
+            if (LiveRepository != null)
             {
-                string com = $"cd '{liveRepository.dirPath}'; ";
-                com += $"git add -A -n";
-                ShellComRes result = Shell.exec(com);
-                if (result.psObjects == null)
-                {
+                string com = $"cd '{LiveRepository.DirPath}'; git add -A -n";
+                ShellComRes result = Shell.Exec(com);
+                if (result.PsObjects == null)
                     return new();
-                }
+
                 // action(add,del,mod), fpath
                 List<Tuple<string, string>> changes = new();
-                foreach (PSObject pso in result.psObjects)
+                foreach (PSObject pso in result.PsObjects)
                 {
                     string line = pso.ToString().Trim();
                     // line : eventName 'fpath'
@@ -741,10 +711,7 @@ public static class GitAPI
                     // extracting fname
                     string fpath = string.Join(" ", splitLine[1..]);
                     // removing enclosing parens
-                    fpath = fpath.Substring(1, fpath.Length - 2);
-                    Debug.WriteLine("UNSTAGED CHANGE");
-                    Debug.WriteLine("ACTION : " + action);
-                    Debug.WriteLine("FPATH : " + fpath);
+                    fpath = fpath[1..^1];
                     changes.Add(new Tuple<string, string>(action, fpath));
                 }
                 return changes;
@@ -753,34 +720,48 @@ public static class GitAPI
         }
 
         public readonly static string description_getRemoteRepositories = "";
-        public static List<RepositoryRemote> getRemoteRepositories()
+
+        /// <summary>
+        /// Gets remote repositories.
+        /// </summary>
+        /// <returns>The list of remote repositories.</returns>
+        public static List<RepositoryRemote> GetRemoteRepositories()
         {
             return remoteRepositories.Values.ToList();
         }
 
 
         public readonly static string description_getLocalRepositories = "";
-        public static List<RepositoryLocal> getLocalRepositories()
+
+        /// <summary>
+        /// Gets local repositories.
+        /// </summary>
+        /// <returns>The list of local repositories.</returns>
+        public static List<RepositoryLocal> GetLocalRepositories()
         {
             return localRepositories.Values.ToList();
         }
 
         public readonly static string description_getAllRepositories = "";
-        public static List<Tuple<RepositoryLocal?, RepositoryRemote?>> getAllRepositories()
+
+        /// <summary>
+        /// Gets all repositories.
+        /// </summary>
+        /// <returns>The list of local and remote repositories.</returns>
+        public static List<Tuple<RepositoryLocal?, RepositoryRemote?>> GetAllRepositories()
         {
-            //
-            List<Tuple<RepositoryLocal?, RepositoryRemote?>> repoPairs = new List<Tuple<RepositoryLocal?, RepositoryRemote?>>();
-            //
+            List<Tuple<RepositoryLocal?, RepositoryRemote?>> repoPairs = new();
+
             HashSet<string> remoteURLs = remoteRepositories.Keys.ToHashSet();
             HashSet<string> localBackedURLS = remoteBackedLocalRepositories.Keys.ToHashSet();
-            HashSet<string> allURLS = new HashSet<string>();
+            HashSet<string> allURLS = new();
+
             allURLS.UnionWith(remoteURLs);
             allURLS.UnionWith(localBackedURLS);
-            //
+
             HashSet<RepositoryLocal> curLocals = localRepositories.Values.ToHashSet();
             foreach (string remoteURL in allURLS)
             {
-
                 // backed local + github
                 if (remoteURLs.Contains(remoteURL) && localBackedURLS.Contains(remoteURL))
                 {
@@ -790,14 +771,11 @@ public static class GitAPI
                         RepositoryRemote remote = remoteRepositories[remoteURL];
                         curLocal = local;
                         repoPairs.Add(new Tuple<RepositoryLocal?, RepositoryRemote?>(local, remote));
-                        Debug.WriteLine($"REPO : LOCAL BACKED WITH GITHUB : {local.title}");
                     }
                     if (curLocal != null)
-                    {
                         curLocals.Remove(curLocal);
-
-                    }
                 }
+
                 // backed local without github
                 else if (localBackedURLS.Contains(remoteURL))
                 {
@@ -806,120 +784,100 @@ public static class GitAPI
                     {
                         curLocal = local;
                         repoPairs.Add(new Tuple<RepositoryLocal?, RepositoryRemote?>(local, null));
-                        Debug.WriteLine($"REPO : LOCAL BACKED WITHOUT GITHUB : {local.title} URL={local.getRemoteURL()}");
                     }
                     if (curLocal != null)
-                    {
                         curLocals.Remove(curLocal);
-                    }
                 }
+
                 // github only
                 else
                 {
                     RepositoryRemote remote = remoteRepositories[remoteURL];
                     repoPairs.Add(new Tuple<RepositoryLocal?, RepositoryRemote?>(null, remote));
-                    Debug.WriteLine($"REPO : GITHUB ONLY : {remote.title} : URL={remote.cloneURL}");
                 }
             }
+
             // local only
             foreach (RepositoryLocal local in curLocals)
-            {
                 repoPairs.Add(new Tuple<RepositoryLocal?, RepositoryRemote?>(local, null));
-                Debug.WriteLine($"REPO : LOCAL ONLY : {local.title}");
-            }
-            //
             return repoPairs;
         }
 
-
-        public static Tuple<string?, string?> getLiveCommitShortHashAndBranch()
+        /// <summary>
+        /// Gets live commit short hash and branch.
+        /// </summary>
+        /// <returns>The list of live commit short hash and branch.</returns>
+        public static Tuple<string?, string?> GetLiveCommitShortHashAndBranch()
         {
-            if (liveRepository != null)
+            if (LiveRepository != null)
             {
-                string com = $"cd '{liveRepository.dirPath}'; ";
-                com += $"git log -1 --pretty=format:%h";
-                ShellComRes result = Shell.exec(com);
-                if (result.psObjects == null)
+                string com = $"cd '{LiveRepository.DirPath}'; git log -1 --pretty=format:%h";
+                ShellComRes result = Shell.Exec(com);
+                if (result.PsObjects == null)
                 {
                     return new(null, null);
                 }
-                if (result.psObjects.Count == 0)
+                if (result.PsObjects.Count == 0)
                 {
                     return new(null, null);
                 }
-                string shortHash = result.psObjects[0].ToString().Trim();
-                Debug.WriteLine($"CURRENT COMMIT SHORT HASH {shortHash}");
+                string shortHash = result.PsObjects[0].ToString().Trim();
 
-                com = $"cd '{liveRepository.dirPath}'; ";
-                com += $"git rev-parse --abbrev-ref HEAD";
-                result = Shell.exec(com);
-                if (result.psObjects == null)
-                {
+                com = $"cd '{LiveRepository.DirPath}'; git rev-parse --abbrev-ref HEAD";
+                result = Shell.Exec(com);
+                if (result.PsObjects == null)
                     return new(null, null);
-                }
-                string? branchName = result.psObjects[0].ToString().Trim();
-                Debug.WriteLine($"CURRENT BRANCH NAME {branchName}");
+
+                string? branchName = result.PsObjects[0].ToString().Trim();
                 if (branchName == "HEAD")
-                {
                     branchName = null;
-                }
 
                 return new(shortHash, branchName);
             }
             return new(null, null);
         }
 
-
-        public static void setCommitsAheadAndBehind()
+        /// <summary>
+        /// Sets commits ahead and behind.
+        /// </summary>
+        public static void SetCommitsAheadAndBehind()
         {
-            Debug.WriteLine($"setCommitsAheadAndBehind()");
-            if (liveRepository != null)
+            if (LiveRepository != null)
             {
-                if (liveBranch != null)
+                if (LiveBranch != null)
                 {
-                    string com = $"cd '{liveRepository.dirPath}'; ";
-                    com += $"git rev-list --left-right --count {liveBranch.title}...origin/{liveBranch.title}";
-                    Debug.WriteLine($"setCommitsAheadAndBehind : com= >{com}<");
-                    ShellComRes result = Shell.exec(com);
-                    if (result.psObjects == null)
+                    string com = $"cd '{LiveRepository.DirPath}'; git rev-list --left-right --count {LiveBranch.Title}...origin/{LiveBranch.Title}";
+                    ShellComRes result = Shell.Exec(com);
+                    if (result.PsObjects == null)
                     {
-                        commitsAhead = null;
-                        commitsBehind = null;
-                        Debug.WriteLine($"setCommitsAheadAndBehind : res is null");
+                        CommitsAhead = CommitsBehind = null;
                         return;
                     }
-                    if (result.psObjects.Count == 0)
+                    if (result.PsObjects.Count == 0)
                     {
-                        commitsAhead = null;
-                        commitsBehind = null;
-                        Debug.WriteLine($"setCommitsAheadAndBehind : res line count is 0");
+                        CommitsAhead = CommitsBehind = null;
                         return;
                     }
-                    string line = result.psObjects[0].ToString().Trim();
+                    string line = result.PsObjects[0].ToString().Trim();
                     line = Regex.Replace(line, @"\s+", " ");
                     string[] nums = line.Split(" ");
-                    commitsBehind = int.Parse(nums[1]);
-                    commitsAhead = int.Parse(nums[0]);
-                    Debug.WriteLine($"SET COMMIT COUNTS : ahead={commitsAhead} behind={commitsBehind}");
+                    CommitsBehind = int.Parse(nums[1]);
+                    CommitsAhead = int.Parse(nums[0]);
                 }
                 else
-                {
-                    Debug.WriteLine($"setCommitsAheadAndBehind : live branch is null");
-                    commitsAhead = null;
-                    commitsBehind = null;
-                    return;
-                }
-
+                    CommitsAhead = CommitsBehind = null;
             }
             else
-            {
-                commitsAhead = null;
-                commitsBehind = null;
-            }
+                CommitsAhead = CommitsBehind = null;
         }
 
-
-        public static bool populateCommitGraphData(Commit cur, int colIndex)
+        /// <summary>
+        /// Populates commit graph data.
+        /// </summary>
+        /// <param name="cur">The current commit.</param>
+        /// <param name="colIndex">The column index.</param>
+        /// <returns>Whether the graph has been populated.</returns>
+        public static bool PopulateCommitGraphData(Commit cur, int colIndex)
         {
             if (cur.graphColIndex != -1)
             {
@@ -928,10 +886,10 @@ public static class GitAPI
             }
             cur.graphColIndex = colIndex;
             int childColIndex = colIndex;
-            IEnumerable<Commit> reverseChildren = cur.children;
+            IEnumerable<Commit> reverseChildren = cur.Children;
             foreach (Commit child in reverseChildren.Reverse())
             {
-                bool alreadyVisited = populateCommitGraphData(child, childColIndex);
+                bool alreadyVisited = PopulateCommitGraphData(child, childColIndex);
                 if (alreadyVisited)
                 {
                     childColIndex--;
@@ -951,15 +909,19 @@ public static class GitAPI
             return false;
         }
 
-        public static Tuple<List<Branch>, List<Commit>> getCommitsAndBranches()
+        /// <summary>
+        /// Gets commits and branches.
+        /// </summary>
+        /// <returns>The list of branches and their commits.</returns>
+        public static Tuple<List<Branch>, List<Commit>> GetCommitsAndBranches()
         {
-            Tuple<string?, string?> liveCommitShortHashAndBranchName = getLiveCommitShortHashAndBranch();
+            Tuple<string?, string?> liveCommitShortHashAndBranchName = GetLiveCommitShortHashAndBranch();
             string? liveCommitShortHash = liveCommitShortHashAndBranchName.Item1;
             string? liveBranchName = liveCommitShortHashAndBranchName.Item2;
 
-            if (liveRepository != null)
+            if (LiveRepository != null)
             {
-                string baseCom = $"cd '{liveRepository.dirPath}'; ";
+                string baseCom = $"cd '{LiveRepository.DirPath}'; ";
 
                 // Commit hash (H)
                 // Abbreviated commit hash (h)
@@ -970,104 +932,105 @@ public static class GitAPI
                 // Subject (s)
 
                 // all commits
-                Dictionary<string, Commit> longHashToCommitDict = new Dictionary<string, Commit>();
-                Dictionary<string, Commit> shortHashToCommitDict = new Dictionary<string, Commit>();
-                List<Commit> commits = new List<Commit>();
+                Dictionary<string, Commit> longHashToCommitDict = new();
+                Dictionary<string, Commit> shortHashToCommitDict = new();
+                List<Commit> commits = new();
                 string delim = " | ";
                 string com = baseCom + $"git log --all --oneline --pretty=format:\"%H{delim}%h{delim}%T{delim}%P\"";
-                ShellComRes comResult = Shell.exec(com);
-                if (comResult.psObjects == null)
+                ShellComRes comResult = Shell.Exec(com);
+                if (comResult.PsObjects == null)
                 {
                     return new(new(), new());
                 }
 
                 // longCommitHash, shortCommitHash, longTreeHash, parentHashes
-                foreach (PSObject pso in comResult.psObjects)
+                foreach (PSObject pso in comResult.PsObjects)
                 {
                     string sline = pso.ToString().Trim();
                     string[] cols = sline.Split(delim);
 
-                    Commit commit = new Commit();
-                    commit.localRepository = liveRepository;
-                    commit.longCommitHash = cols[0];
-                    commit.shortCommitHash = cols[1];
-                    commit.longTreeHash = cols[2];
+                    Commit commit = new()
+                    {
+                        LocalRepository = LiveRepository,
+                        LongCommitHash = cols[0],
+                        ShortCommitHash = cols[1],
+                        LongTreeHash = cols[2],
 
-                    commit.comRes = sline;
+                        ComRes = sline
+                    };
 
                     if (cols.Length > 3)
                     {
                         foreach (string parentHash in cols[3].Split(" "))
                         {
-                            commit.parentHashes.Add(parentHash.Trim());
+                            commit.ParentHashes.Add(parentHash.Trim());
                         }
                     }
-                    longHashToCommitDict[commit.longCommitHash] = commit;
-                    shortHashToCommitDict[commit.shortCommitHash] = commit;
+                    longHashToCommitDict[commit.LongCommitHash] = commit;
+                    shortHashToCommitDict[commit.ShortCommitHash] = commit;
                     commits.Add(commit);
 
                     if (liveCommitShortHash != null)
                     {
-                        if (commit.shortCommitHash == liveCommitShortHash)
+                        if (commit.ShortCommitHash == liveCommitShortHash)
                         {
-                            liveCommit = commit;
+                            LiveCommit = commit;
                         }
                     }
                 }
 
                 // committer name
                 com = baseCom + $"git log --all --oneline --pretty=format:\"%cn\"";
-                comResult = Shell.exec(com);
-                if (comResult.psObjects == null)
+                comResult = Shell.Exec(com);
+                if (comResult.PsObjects == null)
                 {
                     return new(new(), new());
                 }
                 int i = 0;
-                foreach (PSObject pso in comResult.psObjects)
+                foreach (PSObject pso in comResult.PsObjects)
                 {
                     string committerName = pso.ToString().Trim();
                     Commit commit = commits[i];
-                    commit.committerName = committerName;
+                    commit.CommitterName = committerName;
                     i++;
                 }
 
                 // committer date
                 com = baseCom + $"git log --all --oneline --pretty=format:\"%cd\"";
-                comResult = Shell.exec(com);
-                if (comResult.psObjects == null)
+                comResult = Shell.Exec(com);
+                if (comResult.PsObjects == null)
                 {
                     return new(new(), new());
                 }
                 i = 0;
-                foreach (PSObject pso in comResult.psObjects)
+                foreach (PSObject pso in comResult.PsObjects)
                 {
                     string gitDateFormat = pso.ToString().Trim();
-                    DateTime committerDate;
                     DateTime.TryParseExact(
                         gitDateFormat,
                         "ddd MMM d HH:mm:ss yyyy K",
                         System.Globalization.CultureInfo.InvariantCulture,
                         System.Globalization.DateTimeStyles.None,
-                        out committerDate
+                        out DateTime committerDate
                     );
                     Commit commit = commits[i];
-                    commit.committerDate = committerDate;
+                    commit.CommitterDate = committerDate;
                     i++;
                 }
 
                 // subject
                 com = baseCom + $"git log --all --oneline --pretty=format:\"%s\"";
-                comResult = Shell.exec(com);
-                if (comResult.psObjects == null)
+                comResult = Shell.Exec(com);
+                if (comResult.PsObjects == null)
                 {
                     return new(new(), new());
                 }
                 i = 0;
-                foreach (PSObject pso in comResult.psObjects)
+                foreach (PSObject pso in comResult.PsObjects)
                 {
                     string subject = pso.ToString().Trim();
                     Commit commit = commits[i];
-                    commit.subject = subject;
+                    commit.Subject = subject;
                     i++;
                 }
 
@@ -1076,11 +1039,11 @@ public static class GitAPI
                 {
                     string longHash = kvp.Key;
                     Commit commit = kvp.Value;
-                    foreach (string parentHash in commit.parentHashes)
+                    foreach (string parentHash in commit.ParentHashes)
                     {
                         Commit parentCommit = longHashToCommitDict[parentHash];
-                        commit.parents.Add(parentCommit);
-                        parentCommit.children.Add(commit);
+                        commit.Parents.Add(parentCommit);
+                        parentCommit.Children.Add(commit);
                     }
                 }
 
@@ -1090,33 +1053,30 @@ public static class GitAPI
                 {
                     c.graphRowIndex = commitGraphRowIndex;
                     commitGraphRowIndex--;
-                    //Debug.WriteLine("TEST COMMIT");
                 }
                 // populating graph col properties of commits
                 if (commits.Count > 0)
                 {
                     Commit initCommit = commits.Last();
-                    populateCommitGraphData(initCommit, 0);
+                    PopulateCommitGraphData(initCommit, 0);
                     // printing graph
                     foreach (Commit c in commits)
                     {
                         string leftOffset = string.Concat(Enumerable.Repeat("  ", c.graphColIndex));
-                        Debug.WriteLine(leftOffset + $"* (graphRowIndex={c.graphRowIndex} childCount={c.children.Count} parentHashes={c.parentHashes.Count})" + c.subject);
-                        //Debug.WriteLine(leftOffset  + $"* (graphRowIndex={c.graphRowIndex} childCount={c.children.Count} parentHashes={c.parentHashes.Count} comRes={c.comRes})" + c.subject);
                     }
                 }
 
                 // getting all branches
-                List<Branch> allBranches = new List<Branch>();
+                List<Branch> allBranches = new();
                 // getting commits
                 // list local branchs : *(live or not) | name | short hash | most recent commit msg
                 com = baseCom + $"git branch -vva";
-                comResult = Shell.exec(com);
-                if (comResult.psObjects == null)
+                comResult = Shell.Exec(com);
+                if (comResult.PsObjects == null)
                 {
                     return new(new(), new());
                 }
-                foreach (PSObject pso in comResult.psObjects)
+                foreach (PSObject pso in comResult.PsObjects)
                 {
                     string line = pso.ToString().TrimEnd();
                     line = System.Text.RegularExpressions.Regex.Replace(line, @"\s+", " ");
@@ -1128,21 +1088,21 @@ public static class GitAPI
                     if (shortHashToCommitDict.ContainsKey(shortCommitHash))
                     {
                         Commit commit = shortHashToCommitDict[shortCommitHash];
-                        Branch branch = new Branch(title, commit);
-                        commit.branches.Add(branch);
+                        Branch branch = new(title, commit);
+                        commit.Branches.Add(branch);
                         allBranches.Add(branch);
 
                         if (liveCommitShortHash != null && liveBranchName != null)
                         {
-                            if (liveCommitShortHash == shortCommitHash && liveBranchName == branch.title)
+                            if (liveCommitShortHash == shortCommitHash && liveBranchName == branch.Title)
                             {
-                                liveBranch = branch;
+                                LiveBranch = branch;
                             }
                         }
                     }
                 }
 
-                setCommitsAheadAndBehind();
+                SetCommitsAheadAndBehind();
 
                 // branches-commits tuples
                 return new Tuple<List<Branch>, List<Commit>>(allBranches, commits);

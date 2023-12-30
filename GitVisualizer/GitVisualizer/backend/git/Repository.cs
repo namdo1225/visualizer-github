@@ -1,24 +1,33 @@
 ﻿namespace GitVisualizer;
 
-public class Repository
+/// <summary>
+/// The parent class to store data of a repository.
+/// </summary>
+public abstract class Repository(string title)
 {
-    public string title { get; private set; }
 
-    //public HashSet<string,Commit> commits;
+    /// <summary>
+    /// Name of the repository.
+    /// </summary>
+    public string Title { get; private set; } = FormatTitle(title);
 
-    public Repository(string title)
-    {
-        this.title = formatTitle(title);
-    }
-
-    public static string formatTitle(string title)
+    /// <summary>
+    /// Formats repository name.
+    /// </summary>
+    /// <param name="title">The name of the repository.</param>
+    /// <returns>The new repository name.</returns>
+    public static string FormatTitle(string title)
     {
         return title.Replace(" ", "-");
     }
 
+    /// <summary>
+    /// Returns the name of the repository.
+    /// </summary>
+    /// <returns>The name of the repository.</returns>
     public override string ToString()
     {
-        return title;
+        return Title;
     }
     
 }

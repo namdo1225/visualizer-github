@@ -1,77 +1,59 @@
-﻿using System.Diagnostics;
+﻿using GitVisualizer.backend.git;
+using System.Diagnostics;
 
 namespace GitVisualizer;
 
-public class RepositoryLocal : Repository
+/// <summary>
+/// The class to keep track of a local repository.
+/// </summary>
+public class RepositoryLocal(string title, string dirPath) : Repository(title)
 {
+    /// <summary>
+    /// Gets or sets the repository directory path.
+    /// </summary>
+    public string DirPath { get; private set; } = dirPath;
 
-    public string dirPath { get; private set; }
-    public RepositoryLocal(string title, string dirPath) : base(title)
-    {
-        this.dirPath = dirPath;
-    }
-
+    /// <summary>
+    /// Returns the directory path.
+    /// </summary>
+    /// <returns>The directory path.</returns>
     public override string ToString()
     {
-        return dirPath;
+        return DirPath;
     }
 
-    public string? getRemoteURL()
+    /// <summary>
+    /// Gets the remote url.
+    /// </summary>
+    /// <returns>The remote url.</returns>
+    public string? GetRemoteURL()
     {
         string? res = null;
         // TODO check that .git folder and repo exist
-        string com = $"cd '{dirPath}'; ";
-        com += $"git config --get remote.origin.url";
-        ShellComRes result = Shell.exec(com);
-        // TODO check for command success
-        if (result.success)
+        string com = $"cd '{DirPath}'; git config --get remote.origin.url";
+        ShellComRes result = Shell.Exec(com);
+
+        if (result.Success && result.PsObjects != null && result.PsObjects.Count > 0 && result.PsObjects[0] != null)
         {
-            if (result.psObjects != null)
+            res = result.PsObjects[0].ToString();
+            if (res.StartsWith("https://github.com/"))
             {
-                if (result.psObjects.Count() > 0)
-                {
-                    if (result.psObjects[0] != null)
-                    {
-                        res = result.psObjects[0].ToString();
-                        if (res.StartsWith("https://github.com/")){
-                            // https 
-                            if (! res.EndsWith(".git")){
-                                res += ".git";
-                            }
-                            Debug.WriteLine($"getRemoteURL got res https : {res} | {dirPath}");
-                            // stripping "https://"
-                            res = res.Substring(8);
-                        }
-                        else if (res.StartsWith("git@github.com:")) {
-                            // ssh
-                            if (! res.EndsWith(".git")){
-                                res += ".git";
-                            }
-                            Debug.WriteLine($"getRemoteURL got res ssh : {res} | {dirPath}");
-                            // stripping "https://"
-                            res = "github.com/" + res.Substring(15);
-                        }
-                        else {
-                            // invalid
-                            Debug.WriteLine($"getRemoteURL res is not https for : {res} | {dirPath}");
-                        }
-                    }
-                    else {
-                        Debug.WriteLine($"getRemoteURL cmd output line 0 null {dirPath}");
-                    }
-                }
-                else {
-                    Debug.WriteLine($"getRemoteURL cmd output count is 0 {dirPath}");
-                }
+                // https 
+                if (!res.EndsWith(".git"))
+                    res += ".git";
+                // stripping "https://"
+                res = res[8..];
             }
-            else {
-                Debug.WriteLine($"getRemoteURL cmd output is null {dirPath}");
+            else if (res.StartsWith("git@github.com:"))
+            {
+                // ssh
+                if (!res.EndsWith(".git"))
+                    res += ".git";
+                // stripping "https://"
+                res = "github.com/" + res[15..];
             }
         }
-        else {
-            Debug.WriteLine($"getRemoteURL failed for {dirPath}");
-        }
-        Debug.WriteLine($"getRemoteURL returning {res} for {dirPath}");
+
         return res;
     }
 }

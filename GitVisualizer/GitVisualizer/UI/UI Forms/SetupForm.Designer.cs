@@ -53,7 +53,11 @@ namespace GitVisualizer
             rememberMeCheckbox = new CheckBox();
             rememberMeLabel = new Label();
             authorizationPanel = new Panel();
+            BrowserButton = new Button();
+            ClipboardButton = new Button();
             showCodeCheckBox = new CheckBox();
+            repoTypeButton = new CheckBox();
+            grantDeleteRepo = new CheckBox();
             authorizationPanel.SuspendLayout();
             SuspendLayout();
             // 
@@ -63,7 +67,7 @@ namespace GitVisualizer
             label1.Font = new Font("Segoe UI Semibold", 32.25F, FontStyle.Bold, GraphicsUnit.Point);
             label1.Location = new Point(12, 9);
             label1.Name = "label1";
-            label1.Size = new Size(456, 72);
+            label1.Size = new Size(365, 59);
             label1.TabIndex = 0;
             label1.Text = "Workspace Setup";
             // 
@@ -82,7 +86,7 @@ namespace GitVisualizer
             githubLoginButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             githubLoginButton.Location = new Point(26, 199);
             githubLoginButton.Name = "githubLoginButton";
-            githubLoginButton.Size = new Size(236, 98);
+            githubLoginButton.Size = new Size(236, 60);
             githubLoginButton.TabIndex = 2;
             githubLoginButton.Text = "Login Using Github.com";
             githubLoginButton.UseVisualStyleBackColor = true;
@@ -93,7 +97,7 @@ namespace GitVisualizer
             radioButton1.AutoSize = true;
             radioButton1.Location = new Point(30, 436);
             radioButton1.Name = "radioButton1";
-            radioButton1.Size = new Size(371, 24);
+            radioButton1.Size = new Size(296, 19);
             radioButton1.TabIndex = 3;
             radioButton1.TabStop = true;
             radioButton1.Text = "Joining or hosting a collaborative project on Github";
@@ -105,7 +109,7 @@ namespace GitVisualizer
             radioButton2.AutoSize = true;
             radioButton2.Location = new Point(30, 474);
             radioButton2.Name = "radioButton2";
-            radioButton2.Size = new Size(355, 24);
+            radioButton2.Size = new Size(285, 19);
             radioButton2.TabIndex = 4;
             radioButton2.TabStop = true;
             radioButton2.Text = "Creating or cloning a project on the Github cloud";
@@ -117,12 +121,11 @@ namespace GitVisualizer
             radioButton3.AutoSize = true;
             radioButton3.Location = new Point(30, 511);
             radioButton3.Name = "radioButton3";
-            radioButton3.Size = new Size(452, 24);
+            radioButton3.Size = new Size(361, 19);
             radioButton3.TabIndex = 5;
             radioButton3.TabStop = true;
             radioButton3.Text = "Using a local folder to handle version control on my own device\r\n";
             radioButton3.UseVisualStyleBackColor = true;
-            radioButton3.CheckedChanged += radioButton3_CheckedChanged;
             radioButton3.Click += HighlightLocalButton;
             // 
             // localWorkspaceButton
@@ -131,7 +134,7 @@ namespace GitVisualizer
             localWorkspaceButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             localWorkspaceButton.Location = new Point(268, 199);
             localWorkspaceButton.Name = "localWorkspaceButton";
-            localWorkspaceButton.Size = new Size(251, 98);
+            localWorkspaceButton.Size = new Size(251, 60);
             localWorkspaceButton.TabIndex = 6;
             localWorkspaceButton.Text = "Use Local Workspace";
             localWorkspaceButton.UseVisualStyleBackColor = true;
@@ -148,10 +151,9 @@ namespace GitVisualizer
             label3.Font = new Font("Segoe UI Semibold", 24F, FontStyle.Bold, GraphicsUnit.Point);
             label3.Location = new Point(16, 340);
             label3.Name = "label3";
-            label3.Size = new Size(233, 54);
+            label3.Size = new Size(189, 45);
             label3.TabIndex = 7;
             label3.Text = "Need Help?";
-            label3.Click += label3_Click;
             // 
             // label4
             // 
@@ -167,22 +169,20 @@ namespace GitVisualizer
             userCodeLabelHeader.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             userCodeLabelHeader.Location = new Point(12, 9);
             userCodeLabelHeader.Name = "userCodeLabelHeader";
-            userCodeLabelHeader.Size = new Size(375, 187);
+            userCodeLabelHeader.Size = new Size(375, 126);
             userCodeLabelHeader.TabIndex = 9;
-            userCodeLabelHeader.Text = resources.GetString("userCodeLabelHeader.Text");
-            userCodeLabelHeader.Click += userCodeLabelHeader_Click;
+            userCodeLabelHeader.Text = "A Github webpage should have opened in your browser. \r\n\r\nEnter the following code on that page to authorize your device:\r\n";
             // 
             // userCodeLabel
             // 
-            userCodeLabel.Font = new Font("Segoe UI", 24F, FontStyle.Regular, GraphicsUnit.Point);
-            userCodeLabel.Location = new Point(33, 199);
+            userCodeLabel.Font = new Font("Segoe UI", 27.75F, FontStyle.Regular, GraphicsUnit.Point);
+            userCodeLabel.Location = new Point(33, 151);
             userCodeLabel.Name = "userCodeLabel";
             userCodeLabel.Size = new Size(343, 86);
             userCodeLabel.TabIndex = 10;
             userCodeLabel.Text = "1234-5678";
             userCodeLabel.TextAlign = ContentAlignment.MiddleCenter;
             userCodeLabel.Visible = false;
-            userCodeLabel.Click += userCodeLabel_Click;
             // 
             // rememberMeCheckbox
             // 
@@ -192,7 +192,7 @@ namespace GitVisualizer
             rememberMeCheckbox.Font = new Font("Segoe UI", 16F, FontStyle.Regular, GraphicsUnit.Point);
             rememberMeCheckbox.Location = new Point(12, 351);
             rememberMeCheckbox.Name = "rememberMeCheckbox";
-            rememberMeCheckbox.Size = new Size(212, 41);
+            rememberMeCheckbox.Size = new Size(177, 34);
             rememberMeCheckbox.TabIndex = 11;
             rememberMeCheckbox.Text = "Remember Me";
             rememberMeCheckbox.UseVisualStyleBackColor = true;
@@ -205,11 +205,12 @@ namespace GitVisualizer
             rememberMeLabel.Size = new Size(391, 100);
             rememberMeLabel.TabIndex = 12;
             rememberMeLabel.Text = "If checked, your authorization code will be remembered so you will not have to authorize again each time you open the app.\r\n\r\nLeave unchecked to revoke access to your account when exiting the app. ";
-            rememberMeLabel.Click += rememberMeLabel_Click_1;
             // 
             // authorizationPanel
             // 
             authorizationPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            authorizationPanel.Controls.Add(BrowserButton);
+            authorizationPanel.Controls.Add(ClipboardButton);
             authorizationPanel.Controls.Add(showCodeCheckBox);
             authorizationPanel.Controls.Add(userCodeLabelHeader);
             authorizationPanel.Controls.Add(rememberMeCheckbox);
@@ -223,22 +224,72 @@ namespace GitVisualizer
             authorizationPanel.TabIndex = 13;
             authorizationPanel.Visible = false;
             // 
+            // BrowserButton
+            // 
+            BrowserButton.FlatStyle = FlatStyle.Flat;
+            BrowserButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            BrowserButton.ForeColor = SystemColors.MenuHighlight;
+            BrowserButton.Location = new Point(220, 485);
+            BrowserButton.Name = "BrowserButton";
+            BrowserButton.Size = new Size(167, 45);
+            BrowserButton.TabIndex = 15;
+            BrowserButton.Text = "Open Browser";
+            BrowserButton.UseVisualStyleBackColor = true;
+            BrowserButton.Click += BrowserButton_Click;
+            // 
+            // ClipboardButton
+            // 
+            ClipboardButton.FlatStyle = FlatStyle.Flat;
+            ClipboardButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            ClipboardButton.ForeColor = SystemColors.MenuHighlight;
+            ClipboardButton.Location = new Point(33, 485);
+            ClipboardButton.Name = "ClipboardButton";
+            ClipboardButton.Size = new Size(167, 45);
+            ClipboardButton.TabIndex = 14;
+            ClipboardButton.Text = "Copy to Clipboard";
+            ClipboardButton.UseVisualStyleBackColor = true;
+            ClipboardButton.Click += ClipboardButton_Click;
+            // 
             // showCodeCheckBox
             // 
             showCodeCheckBox.AutoSize = true;
             showCodeCheckBox.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             showCodeCheckBox.Location = new Point(62, 288);
             showCodeCheckBox.Name = "showCodeCheckBox";
-            showCodeCheckBox.Size = new Size(266, 32);
+            showCodeCheckBox.Size = new Size(215, 25);
             showCodeCheckBox.TabIndex = 13;
             showCodeCheckBox.Text = "Show Code (Sensitive Info)";
             showCodeCheckBox.UseVisualStyleBackColor = true;
             showCodeCheckBox.CheckedChanged += ShowCodeCheckboxChanged;
             // 
+            // repoTypeButton
+            // 
+            repoTypeButton.AutoSize = true;
+            repoTypeButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            repoTypeButton.Location = new Point(26, 271);
+            repoTypeButton.Name = "repoTypeButton";
+            repoTypeButton.Size = new Size(319, 25);
+            repoTypeButton.TabIndex = 16;
+            repoTypeButton.Text = "Grant access to all repo (Public by default)";
+            repoTypeButton.UseVisualStyleBackColor = true;
+            // 
+            // grantDeleteRepo
+            // 
+            grantDeleteRepo.AutoSize = true;
+            grantDeleteRepo.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            grantDeleteRepo.Location = new Point(26, 302);
+            grantDeleteRepo.Name = "grantDeleteRepo";
+            grantDeleteRepo.Size = new Size(375, 25);
+            grantDeleteRepo.TabIndex = 17;
+            grantDeleteRepo.Text = "Grant delete access to repositories (Off by default)";
+            grantDeleteRepo.UseVisualStyleBackColor = true;
+            // 
             // SetupForm
             // 
             AutoScaleMode = AutoScaleMode.Inherit;
             ClientSize = new Size(947, 559);
+            Controls.Add(grantDeleteRepo);
+            Controls.Add(repoTypeButton);
             Controls.Add(authorizationPanel);
             Controls.Add(label4);
             Controls.Add(label3);
@@ -252,7 +303,7 @@ namespace GitVisualizer
             Name = "SetupForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "GitHelper Login";
-            Load += Form1_Load;
+            Load += SetupForm_Load;
             authorizationPanel.ResumeLayout(false);
             authorizationPanel.PerformLayout();
             ResumeLayout(false);
@@ -307,5 +358,9 @@ namespace GitVisualizer
         private Label rememberMeLabel;
         private Panel authorizationPanel;
         private CheckBox showCodeCheckBox;
+        private Button ClipboardButton;
+        private Button BrowserButton;
+        private CheckBox repoTypeButton;
+        private CheckBox grantDeleteRepo;
     }
 }

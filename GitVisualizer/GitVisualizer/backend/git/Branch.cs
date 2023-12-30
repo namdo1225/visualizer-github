@@ -1,18 +1,26 @@
 ﻿namespace GitVisualizer;
 
-public class Branch
+/// <summary>
+/// Class that is used to store data about a Git branch.
+/// </summary>
+public class Branch(string title, Commit commit)
 {
-    public string title { get; private set; }
-    public Commit commit { get; set; }
+    /// <summary>
+    /// Gets or Sets for the branch's name.
+    /// </summary>
+    public string Title { get; private set; } = title;
 
-    public Branch(string title, Commit commit)
-    {
-        this.title = title;
-        this.commit = commit;
-    }
+    /// <summary>
+    /// Gets or Sets for the branch's current commit.
+    /// </summary>
+    public Commit Commit { get; set; } = commit;
 
+    /// <summary>
+    /// The string conversion is the branch's name.
+    /// </summary>
+    /// <returns>The branch's name.</returns>
     public override string ToString()
     {
-        return title;
+        return Title;
     }
 }

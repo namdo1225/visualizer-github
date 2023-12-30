@@ -38,6 +38,7 @@
             commitSyncLabel = new Label();
             commitMessageTextBox = new TextBox();
             syncButton = new Button();
+            refreshButton = new Button();
             outgoingCountLabel = new Label();
             outgoingCountTextLabel = new Label();
             incomingCountLabel = new Label();
@@ -93,9 +94,9 @@
             commitChangesButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
             commitChangesButton.Location = new Point(15, 87);
             commitChangesButton.Name = "commitChangesButton";
-            commitChangesButton.Size = new Size(181, 28);
+            commitChangesButton.Size = new Size(102, 28);
             commitChangesButton.TabIndex = 16;
-            commitChangesButton.Text = "Commit Staged Changes";
+            commitChangesButton.Text = "Commit";
             commitChangesButton.UseVisualStyleBackColor = true;
             commitChangesButton.Click += OnCommitChangesButton;
             // 
@@ -161,6 +162,7 @@
             flowLayoutPanel1.Controls.Add(commitMessageTextBox);
             flowLayoutPanel1.Controls.Add(commitChangesButton);
             flowLayoutPanel1.Controls.Add(syncButton);
+            flowLayoutPanel1.Controls.Add(refreshButton);
             flowLayoutPanel1.Controls.Add(outgoingCountLabel);
             flowLayoutPanel1.Controls.Add(outgoingCountTextLabel);
             flowLayoutPanel1.Controls.Add(incomingCountLabel);
@@ -191,19 +193,31 @@
             commitMessageTextBox.PlaceholderText = "Enter commit message... <Required>";
             commitMessageTextBox.Size = new Size(243, 45);
             commitMessageTextBox.TabIndex = 8;
-            commitMessageTextBox.TextChanged += commitMessageTextBox_TextChanged;
+            commitMessageTextBox.TextChanged += CommitMessageTextBox_TextChanged;
             // 
             // syncButton
             // 
             syncButton.FlatStyle = FlatStyle.Flat;
             syncButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
-            syncButton.Location = new Point(202, 87);
+            syncButton.Location = new Point(123, 87);
             syncButton.Name = "syncButton";
             syncButton.Size = new Size(56, 28);
             syncButton.TabIndex = 17;
             syncButton.Text = "Sync";
             syncButton.UseVisualStyleBackColor = true;
             syncButton.Click += OnSyncButton;
+            // 
+            // refreshButton
+            // 
+            refreshButton.FlatStyle = FlatStyle.Flat;
+            refreshButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            refreshButton.Location = new Point(185, 87);
+            refreshButton.Name = "refreshButton";
+            refreshButton.Size = new Size(73, 28);
+            refreshButton.TabIndex = 19;
+            refreshButton.Text = "Refresh";
+            refreshButton.UseVisualStyleBackColor = true;
+            refreshButton.Click += RefreshButton_Click;
             // 
             // outgoingCountLabel
             // 
@@ -396,7 +410,7 @@
             stagedChangesDataGridView.Size = new Size(428, 151);
             stagedChangesDataGridView.TabIndex = 0;
             stagedChangesDataGridView.CellClick += OnStagedFileCellSelected;
-            stagedChangesDataGridView.CellContentClick += stagedChangesDataGridView_CellContentClick;
+            stagedChangesDataGridView.CellContentClick += StagedChangesDataGridView_CellContentClick;
             // 
             // fileColumn
             // 
@@ -471,7 +485,7 @@
             unstagedChangesDataGridView.Size = new Size(431, 151);
             unstagedChangesDataGridView.TabIndex = 1;
             unstagedChangesDataGridView.CellClick += OnUnstagedFileCellSelected;
-            unstagedChangesDataGridView.CellContentClick += unstagedChangesDataGridView_CellContentClick;
+            unstagedChangesDataGridView.CellContentClick += UnstagedChangesDataGridView_CellContentClick;
             // 
             // dataGridViewTextBoxColumn1
             // 
@@ -586,7 +600,7 @@
 
         #endregion
 
-        private void ApplyColorTheme(UITheme.AppTheme theme)
+        public void ApplyColorTheme(UITheme.AppTheme theme)
         {
             mergingControlPanel.BackColor = theme.PanelBackground;
             mergingControlPanel.ForeColor = theme.TextBright;
@@ -668,7 +682,6 @@
         private Label unstagedChangesLabel;
         private Button undoAllButton;
         private Button stageAllButton;
-        private Button syncButton;
         private Panel checkedOutBranchPanel;
         private Label checkedOutBranchTextLabel;
         private Label checkedOutBranchLabel;
@@ -681,5 +694,7 @@
         private DataGridView diffGridView;
         private DataGridViewTextBoxColumn oldChangesColumn;
         private DataGridViewTextBoxColumn newChangesColumn;
+        private Button syncButton;
+        private Button refreshButton;
     }
 }
