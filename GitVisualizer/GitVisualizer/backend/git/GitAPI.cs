@@ -293,7 +293,6 @@ public static class GitAPI
             {
                 if (!ReferenceEquals(repositoryLocal, LiveRepository))
                 {
-                    // TODO check that .git folder and repo exist
                     string com = $"cd '{repositoryLocal.DirPath}'; git init '{repositoryLocal.DirPath}'";
 
                     Shell.Exec(com);
@@ -332,7 +331,6 @@ public static class GitAPI
             {
                 if (!ReferenceEquals(branch?.Commit, LiveCommit))
                 {
-                    // TODO check that branch exists and points to a valid commit
                     string com = $"cd '{branch?.Commit?.LocalRepository?.DirPath}'; git checkout {branch?.Title}";
                     Shell.Exec(com);
                     LiveCommit = branch?.Commit;
@@ -455,7 +453,6 @@ public static class GitAPI
             /// </summary>
             public static void CreateLocalRepository()
             {
-                // TODO check that .git folder and repo exist
                 FolderBrowserDialog dialog = new();
                 DialogResult fdResult = dialog.ShowDialog();
                 if (fdResult == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
