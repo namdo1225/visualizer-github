@@ -206,7 +206,9 @@ namespace GitVisualizer.UI.UI_Forms
         }
 
         #endregion
+        #pragma warning disable Commentor // Missing comments.
         private void ApplyColorTheme(UITheme.AppTheme theme)
+        #pragma warning restore Commentor // Missing comments.
         {
             BackColor = theme.AppBackground;
             ForeColor = theme.TextSoft;

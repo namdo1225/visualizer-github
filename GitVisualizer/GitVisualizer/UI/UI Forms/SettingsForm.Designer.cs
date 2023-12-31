@@ -37,13 +37,13 @@ namespace GitVisualizer
             components = new System.ComponentModel.Container();
             notifyIcon1 = new NotifyIcon(components);
             rememberMeCheckbox = new CheckBox();
-            label3 = new Label();
+            selectThemeLabel = new Label();
             themeCombo = new ComboBox();
-            label8 = new Label();
+            credits = new Label();
             credentialsLabel = new Label();
             configButton = new Button();
             linksText = new Label();
-            label7 = new Label();
+            othersLabel = new Label();
             button3 = new Button();
             deleteCredButton = new Button();
             themeText = new Label();
@@ -54,11 +54,11 @@ namespace GitVisualizer
             storeCredButton = new Button();
             retrieveCredButton = new Button();
             namWebsiteButton = new Button();
-            label5 = new Label();
-            label1 = new Label();
-            label4 = new Label();
-            label6 = new Label();
-            label2 = new Label();
+            versionLabel = new Label();
+            resetLabel = new Label();
+            resetInstruction = new Label();
+            credentialsInstruction = new Label();
+            permission = new Label();
             tableLayoutPanel1 = new TableLayoutPanel();
             tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
@@ -84,16 +84,16 @@ namespace GitVisualizer
             rememberMeCheckbox.UseVisualStyleBackColor = true;
             rememberMeCheckbox.CheckedChanged += RemMeCheck_Change;
             // 
-            // label3
+            // selectThemeLabel
             // 
-            label3.Dock = DockStyle.Fill;
-            label3.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            label3.Location = new Point(3, 574);
-            label3.Name = "label3";
-            label3.Size = new Size(303, 84);
-            label3.TabIndex = 16;
-            label3.Text = "Select the theme:";
-            label3.TextAlign = ContentAlignment.TopCenter;
+            selectThemeLabel.Dock = DockStyle.Fill;
+            selectThemeLabel.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            selectThemeLabel.Location = new Point(3, 574);
+            selectThemeLabel.Name = "selectThemeLabel";
+            selectThemeLabel.Size = new Size(303, 84);
+            selectThemeLabel.TabIndex = 16;
+            selectThemeLabel.Text = "Select the theme:";
+            selectThemeLabel.TextAlign = ContentAlignment.TopCenter;
             // 
             // themeCombo
             // 
@@ -106,17 +106,17 @@ namespace GitVisualizer
             themeCombo.TabIndex = 15;
             themeCombo.SelectedIndexChanged += ThemeCombo_Change;
             // 
-            // label8
+            // credits
             // 
-            label8.Dock = DockStyle.Fill;
-            label8.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            label8.ImageAlign = ContentAlignment.BottomLeft;
-            label8.Location = new Point(3, 82);
-            label8.Name = "label8";
-            tableLayoutPanel1.SetRowSpan(label8, 2);
-            label8.Size = new Size(303, 164);
-            label8.TabIndex = 31;
-            label8.Text = "Credits:\r\nNam Do - Forked Developer\r\n\r\nRyan Pecha - Backend\r\nKyle Walker - Frontend\r\nPatrick Comden - Frontend";
+            credits.Dock = DockStyle.Fill;
+            credits.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            credits.ImageAlign = ContentAlignment.BottomLeft;
+            credits.Location = new Point(3, 82);
+            credits.Name = "credits";
+            tableLayoutPanel1.SetRowSpan(credits, 2);
+            credits.Size = new Size(303, 164);
+            credits.TabIndex = 31;
+            credits.Text = "Credits:\r\nNam Do - Forked Developer\r\n\r\nRyan Pecha - Backend\r\nKyle Walker - Frontend\r\nPatrick Comden - Frontend";
             // 
             // credentialsLabel
             // 
@@ -155,17 +155,17 @@ namespace GitVisualizer
             linksText.Text = "Links";
             linksText.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // label7
+            // othersLabel
             // 
-            label7.AutoSize = true;
-            label7.Dock = DockStyle.Fill;
-            label7.Font = new Font("Segoe UI Semibold", 24F, FontStyle.Bold | FontStyle.Underline, GraphicsUnit.Point);
-            label7.Location = new Point(621, 492);
-            label7.Name = "label7";
-            label7.Size = new Size(303, 82);
-            label7.TabIndex = 26;
-            label7.Text = "Others";
-            label7.TextAlign = ContentAlignment.MiddleCenter;
+            othersLabel.AutoSize = true;
+            othersLabel.Dock = DockStyle.Fill;
+            othersLabel.Font = new Font("Segoe UI Semibold", 24F, FontStyle.Bold | FontStyle.Underline, GraphicsUnit.Point);
+            othersLabel.Location = new Point(621, 492);
+            othersLabel.Name = "othersLabel";
+            othersLabel.Size = new Size(303, 82);
+            othersLabel.TabIndex = 26;
+            othersLabel.Text = "Others";
+            othersLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // button3
             // 
@@ -294,59 +294,59 @@ namespace GitVisualizer
             namWebsiteButton.UseVisualStyleBackColor = true;
             namWebsiteButton.Click += NamWebsite_Click;
             // 
-            // label5
+            // versionLabel
             // 
-            label5.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            label5.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            label5.Location = new Point(1146, 637);
-            label5.Name = "label5";
-            label5.Size = new Size(87, 21);
-            label5.TabIndex = 18;
-            label5.Text = "Version 1.0\r\n";
-            label5.TextAlign = ContentAlignment.BottomRight;
+            versionLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            versionLabel.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            versionLabel.Location = new Point(1146, 637);
+            versionLabel.Name = "versionLabel";
+            versionLabel.Size = new Size(87, 21);
+            versionLabel.TabIndex = 18;
+            versionLabel.Text = "Version 1.0\r\n";
+            versionLabel.TextAlign = ContentAlignment.BottomRight;
             // 
-            // label1
+            // resetLabel
             // 
-            label1.Dock = DockStyle.Fill;
-            label1.Font = new Font("Segoe UI Semibold", 24F, FontStyle.Bold | FontStyle.Underline, GraphicsUnit.Point);
-            label1.Location = new Point(621, 246);
-            label1.Name = "label1";
-            label1.Size = new Size(303, 82);
-            label1.TabIndex = 14;
-            label1.Text = "Reset";
-            label1.TextAlign = ContentAlignment.MiddleCenter;
+            resetLabel.Dock = DockStyle.Fill;
+            resetLabel.Font = new Font("Segoe UI Semibold", 24F, FontStyle.Bold | FontStyle.Underline, GraphicsUnit.Point);
+            resetLabel.Location = new Point(621, 246);
+            resetLabel.Name = "resetLabel";
+            resetLabel.Size = new Size(303, 82);
+            resetLabel.TabIndex = 14;
+            resetLabel.Text = "Reset";
+            resetLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // label4
+            // resetInstruction
             // 
-            tableLayoutPanel1.SetColumnSpan(label4, 2);
-            label4.Dock = DockStyle.Fill;
-            label4.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            label4.Location = new Point(621, 328);
-            label4.Name = "label4";
-            label4.Size = new Size(612, 82);
-            label4.TabIndex = 17;
-            label4.Text = "You can delete stored credential in Credential Manager. If you want to delete your authorization for this app to use your repositories, you can go to GitHub and remove it.\r\n";
+            tableLayoutPanel1.SetColumnSpan(resetInstruction, 2);
+            resetInstruction.Dock = DockStyle.Fill;
+            resetInstruction.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            resetInstruction.Location = new Point(621, 328);
+            resetInstruction.Name = "resetInstruction";
+            resetInstruction.Size = new Size(612, 82);
+            resetInstruction.TabIndex = 17;
+            resetInstruction.Text = "You can delete stored credential in Credential Manager. If you want to delete your authorization for this app to use your repositories, you can go to GitHub and remove it.\r\n";
             // 
-            // label6
+            // credentialsInstruction
             // 
-            label6.Dock = DockStyle.Fill;
-            label6.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            label6.Location = new Point(3, 328);
-            label6.Name = "label6";
-            label6.Size = new Size(303, 82);
-            label6.TabIndex = 22;
-            label6.Text = "Store/retrieve credentials (assuming \"Remember Me\" is checked and access token is available).";
+            credentialsInstruction.Dock = DockStyle.Fill;
+            credentialsInstruction.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            credentialsInstruction.Location = new Point(3, 328);
+            credentialsInstruction.Name = "credentialsInstruction";
+            credentialsInstruction.Size = new Size(303, 82);
+            credentialsInstruction.TabIndex = 22;
+            credentialsInstruction.Text = "Store/retrieve credentials (assuming \"Remember Me\" is checked and access token is available).";
             // 
-            // label2
+            // permission
             // 
-            label2.Dock = DockStyle.Fill;
-            label2.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            label2.Location = new Point(312, 82);
-            label2.Name = "label2";
-            tableLayoutPanel1.SetRowSpan(label2, 2);
-            label2.Size = new Size(303, 164);
-            label2.TabIndex = 30;
-            label2.Text = "You grant the app permision to read/write to your repositories on your behalf. As you can see from our code, we do not collect your data or make unauthorized actions without your permission.";
+            permission.Dock = DockStyle.Fill;
+            permission.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            permission.Location = new Point(312, 82);
+            permission.Name = "permission";
+            tableLayoutPanel1.SetRowSpan(permission, 2);
+            permission.Size = new Size(303, 164);
+            permission.TabIndex = 30;
+            permission.Text = "You grant the app permision to read/write to your repositories on your behalf. As you can see from our code, we do not collect your data or make unauthorized actions without your permission.";
             // 
             // tableLayoutPanel1
             // 
@@ -361,22 +361,22 @@ namespace GitVisualizer
             tableLayoutPanel1.Controls.Add(settingsText, 0, 0);
             tableLayoutPanel1.Controls.Add(button3, 3, 2);
             tableLayoutPanel1.Controls.Add(linksText, 2, 0);
-            tableLayoutPanel1.Controls.Add(label2, 1, 1);
-            tableLayoutPanel1.Controls.Add(label3, 0, 7);
+            tableLayoutPanel1.Controls.Add(permission, 1, 1);
+            tableLayoutPanel1.Controls.Add(selectThemeLabel, 0, 7);
             tableLayoutPanel1.Controls.Add(themeText, 0, 6);
             tableLayoutPanel1.Controls.Add(storeCredButton, 0, 5);
             tableLayoutPanel1.Controls.Add(retrieveCredButton, 1, 5);
-            tableLayoutPanel1.Controls.Add(label6, 0, 4);
+            tableLayoutPanel1.Controls.Add(credentialsInstruction, 0, 4);
             tableLayoutPanel1.Controls.Add(rememberMeCheckbox, 1, 4);
-            tableLayoutPanel1.Controls.Add(label1, 2, 3);
-            tableLayoutPanel1.Controls.Add(label4, 2, 4);
+            tableLayoutPanel1.Controls.Add(resetLabel, 2, 3);
+            tableLayoutPanel1.Controls.Add(resetInstruction, 2, 4);
             tableLayoutPanel1.Controls.Add(deleteCredButton, 2, 5);
             tableLayoutPanel1.Controls.Add(authButton, 3, 5);
-            tableLayoutPanel1.Controls.Add(label7, 2, 6);
+            tableLayoutPanel1.Controls.Add(othersLabel, 2, 6);
             tableLayoutPanel1.Controls.Add(configButton, 2, 7);
-            tableLayoutPanel1.Controls.Add(label5, 3, 7);
+            tableLayoutPanel1.Controls.Add(versionLabel, 3, 7);
             tableLayoutPanel1.Controls.Add(themeCombo, 1, 7);
-            tableLayoutPanel1.Controls.Add(label8, 0, 1);
+            tableLayoutPanel1.Controls.Add(credits, 0, 1);
             tableLayoutPanel1.Controls.Add(credentialsLabel, 0, 3);
             tableLayoutPanel1.Dock = DockStyle.Fill;
             tableLayoutPanel1.Location = new Point(0, 0);
@@ -409,15 +409,15 @@ namespace GitVisualizer
         }
 
         #endregion
-        #pragma warning disable Commentor // Missing comments.
+#pragma warning disable Commentor // Missing comments.
         private void ApplyColorTheme(UITheme.AppTheme theme)
-        #pragma warning restore Commentor // Missing comments.
+#pragma warning restore Commentor // Missing comments.
         {
             BackColor = theme.AppBackground;
             ForeColor = theme.TextSoft;
 
             settingsText.ForeColor = theme.TextHeader;
-            label2.ForeColor = theme.TextNormal;
+            permission.ForeColor = theme.TextNormal;
 
             /// Apply themes to all buttons
             IEnumerable<Control> buttons = this.Controls.OfType<Control>().Where(x => x is Button);
@@ -435,13 +435,13 @@ namespace GitVisualizer
         }
         private NotifyIcon notifyIcon1;
         private CheckBox rememberMeCheckbox;
-        private Label label3;
+        private Label selectThemeLabel;
         private ComboBox themeCombo;
-        private Label label8;
+        private Label credits;
         private Label credentialsLabel;
         private Button configButton;
         private Label linksText;
-        private Label label7;
+        private Label othersLabel;
         private Button button3;
         private Button deleteCredButton;
         private Label themeText;
@@ -452,11 +452,11 @@ namespace GitVisualizer
         private Button storeCredButton;
         private Button retrieveCredButton;
         private Button namWebsiteButton;
-        private Label label5;
-        private Label label1;
-        private Label label4;
-        private Label label6;
-        private Label label2;
+        private Label versionLabel;
+        private Label resetLabel;
+        private Label resetInstruction;
+        private Label credentialsInstruction;
+        private Label permission;
         private TableLayoutPanel tableLayoutPanel1;
     }
 }
