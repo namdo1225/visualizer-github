@@ -10,12 +10,10 @@ using GitVisualizer.backend;
 namespace GitVisualizer
 {
     /// <summary>
-    /// Code for the Workspace Form Window, including event handlers, color theme settings, and component initialization
+    /// Code for the Settings Workspace Form Window, including event handlers, color theme settings, and component initialization
     /// </summary>
     public partial class SettingsForm : Form
     {
-        private readonly string NAM_WEBSITE = "https://namdo1225.github.io/";
-        private readonly string REPO_WEBSITE = "https://github.com/namdo1225/visualizer-github";
         private readonly string AUTH_WEBSITE = "https://github.com/settings/applications";
 
         /// <summary>
@@ -29,22 +27,13 @@ namespace GitVisualizer
         }
 
         /// <summary>
-        /// Opens an external website.
-        /// </summary>
-        /// <param name="siteURL">The url to open.</param>
-        private static void OpenExternalWebsite(string siteURL)
-        {
-            Process.Start(new ProcessStartInfo { FileName = siteURL, UseShellExecute = true });
-        }
-
-        /// <summary>
         /// Opens Nam's website.
         /// </summary>
         /// <param name="sender">The sender object.</param>
         /// <param name="e">The EventArgs.</param>
         private void NamWebsite_Click(object sender, EventArgs e)
         {
-            OpenExternalWebsite(NAM_WEBSITE);
+            MainForm.OpenExternalWebsite(MainForm.NAM_WEBSITE);
         }
 
         /// <summary>
@@ -54,7 +43,7 @@ namespace GitVisualizer
         /// <param name="e">The EventArgs.</param>
         private void AppRepoButton_Click(object sender, EventArgs e)
         {
-            OpenExternalWebsite(REPO_WEBSITE);
+            MainForm.OpenExternalWebsite(MainForm.REPO_WEBSITE);
         }
 
         /// <summary>
@@ -102,7 +91,7 @@ namespace GitVisualizer
         /// <param name="e">The EventArgs.</param>
         private void AuthButton_Click(object sender, EventArgs e)
         {
-            OpenExternalWebsite(AUTH_WEBSITE);
+            MainForm.OpenExternalWebsite(AUTH_WEBSITE);
         }
 
         /// <summary>

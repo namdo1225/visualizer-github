@@ -600,7 +600,9 @@
 
         #endregion
 
+        #pragma warning disable Commentor // Missing comments.
         public void ApplyColorTheme(UITheme.AppTheme theme)
+        #pragma warning restore Commentor // Missing comments.
         {
             mergingControlPanel.BackColor = theme.PanelBackground;
             mergingControlPanel.ForeColor = theme.TextBright;

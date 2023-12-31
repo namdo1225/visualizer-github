@@ -35,8 +35,6 @@ namespace GitVisualizer.UI.UI_Forms
         {
             InitializeComponent();
             ApplyColorTheme(MainForm.AppTheme);
-            checkoutBranchButton.Visible = false;
-            deleteBranchButton.Visible = false;
         }
 
         /// <summary>
@@ -53,20 +51,16 @@ namespace GitVisualizer.UI.UI_Forms
         /// </summary>
         private void UpdateLiveReposAndBranch()
         {
-            if (GitAPI.LiveRepository == null) { return; }
+            if (GitAPI.LiveRepository == null)
+                return;
 
             activeRepositoryTextLabel.Text = GitAPI.LiveRepository.Title;
             activeRepositoryTextLabel.ForeColor = MainForm.AppTheme.TextBright;
 
             if (GitAPI.LiveBranch != null)
-            {
-                checkedOutBranchTextLabel.Text = "Branch: " + GitAPI.LiveBranch.Title;
-            }
+                checkedOutBranchTextLabel.Text = $"Branch: {GitAPI.LiveBranch.Title}";
             else if (GitAPI.LiveCommit != null)
-            {
-                checkedOutBranchTextLabel.Text = "Commit: " + GitAPI.LiveCommit.ShortCommitHash;
-            }
-
+                checkedOutBranchTextLabel.Text = $"Commit: {GitAPI.LiveCommit.ShortCommitHash}";
         }
 
         /// <summary>
@@ -90,13 +84,8 @@ namespace GitVisualizer.UI.UI_Forms
 
             branchComboBox.DataSource = commitHistory.Item1;
             if (commitHistory.Item1.Count > 0)
-            {
-                checkoutBranchButton.Visible = true;
-                deleteBranchButton.Visible = true;
-                newBranchFromCommitTextBox.Visible = true;
-                createBranchFromCurrentButton.Visible = true;
-            }
-
+                checkoutBranchButton.Visible = deleteBranchButton.Visible = newBranchFromCommitTextBox.Visible =
+                    createBranchFromCurrentButton.Visible = mergeButton.Visible = true;
         }
 
         /// <summary>
@@ -106,11 +95,14 @@ namespace GitVisualizer.UI.UI_Forms
         /// <param name="e">The EventArgs.</param>
         public void OnCheckoutToBranchButton(object sender, EventArgs e)
         {
-            if (branchComboBox.Items.Count == 0) { return; }
+            if (branchComboBox.Items.Count == 0)
+                return;
             Branch selected = (Branch)branchComboBox.SelectedItem;
             GitAPI.Actions.LocalActions.CheckoutBranch(selected);
-            if (GitAPI.LiveBranch == null) { return; }
-            checkedOutBranchTextLabel.Text = "Branch: " + GitAPI.LiveBranch.Title;
+
+            if (GitAPI.LiveBranch == null)
+                return;
+            checkedOutBranchTextLabel.Text = $"Branch: {GitAPI.LiveBranch.Title}";
             branchesGridView.Refresh();
         }
 
@@ -121,11 +113,10 @@ namespace GitVisualizer.UI.UI_Forms
         /// <param name="e">The EventArgs.</param>
         public void OnDeleteBranchButton(object sender, EventArgs e)
         {
-            if (branchComboBox.Items.Count == 0)
-                return;
-            //Branch selected = (Branch)branchComboBox.SelectedItem;
-            Branch? selected = null;
-            GitAPI.Actions.LocalActions.DeleteBranchLocal(selected);
+            if (branchComboBox.Items.Count > 0) {
+                Branch? selected = null;
+                GitAPI.Actions.LocalActions.DeleteBranchLocal(selected);
+            }
         }
 
         /// <summary>
@@ -153,7 +144,7 @@ namespace GitVisualizer.UI.UI_Forms
         public void OnCheckoutToSelectedCommitButton(object sender, EventArgs e)
         {
             if (selectedCommit == null) { return; }
-            checkedOutBranchTextLabel.Text = "Commit: " + selectedCommit.ShortCommitHash;
+            checkedOutBranchTextLabel.Text = $"Commit: {selectedCommit.ShortCommitHash}";
             GitAPI.Actions.LocalActions.CheckoutCommit(selectedCommit);
             branchesGridView.Refresh();
         }
@@ -179,12 +170,13 @@ namespace GitVisualizer.UI.UI_Forms
         private void BranchesGridView_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             int index = e.RowIndex;
-            if (index < 0) { return; }
-            selectedCommit = commitHistory.Item2[index];
-            selectedCommitTextLabel.Text = "Selected Commit: " + selectedCommit.ShortCommitHash + " - " + selectedCommit.Subject;
-            checkoutCommitButton.Visible = true;
-            newBranchFromCommitTextBox.Visible = true;
-            createBranchFromSelectedButton.Visible = true;
+            if (index >= 0)
+            {
+                selectedCommit = commitHistory.Item2[index];
+                selectedCommitTextLabel.Text = $"Selected Commit: {selectedCommit.ShortCommitHash} - {selectedCommit.Subject}";
+                checkoutCommitButton.Visible = newBranchFromCommitTextBox.Visible = createBranchFromSelectedButton.Visible =
+                    undoCommitButton.Visible = true;
+            }
         }
 
         /// <summary>
@@ -200,8 +192,6 @@ namespace GitVisualizer.UI.UI_Forms
 
             Commit commit = commitHistory.Item2[e.RowIndex];
 
-
-            int cellHeight = branchesGridView.RowTemplate.Height;
             int depthOffset = commit.graphColIndex + 1;
 
 
@@ -362,16 +352,34 @@ namespace GitVisualizer.UI.UI_Forms
         }
 
         /// <summary>
-        /// The pixels from coord.
+        /// The undo commit button click handler. Undo the last commit for a local repository.
         /// </summary>
-        /// <param name="col">The column of the pixel.</param>
-        /// <param name="row">The row of the pixel.</param>
-        /// <returns>The new point.</returns>
-        private Point PixelsFromCoord(int col, int row)
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
+        private void UndoCommitButton_Click(object sender, EventArgs e)
         {
-            int x = 0;
-            int y = 0;
-            return new Point(x, y);
+            GitAPI.Actions.LocalActions.UndoLastCommit();
+            OnBranchesControlFocus();
+        }
+
+        /// <summary>
+        /// The merge button click handler. Merge currently selected branch to another branch.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void MergeButton_Click(object sender, EventArgs e)
+        {
+            string? branch = branchComboBox.SelectedItem.ToString();
+            string? currentBranch = GitAPI.LiveBranch.Title;
+            if (currentBranch != null && branch != null && currentBranch != branch)
+            {
+                GitAPI.Actions.LocalActions.Merge(branch);
+                OnBranchesControlFocus();
+            }
+            else if (currentBranch == null || branch == null)
+                MainForm.OpenDialog("No branch is currently selected.");
+            else
+                MainForm.OpenDialog("You cannot merge a branch with itself.");
         }
     }
 }

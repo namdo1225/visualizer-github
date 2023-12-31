@@ -75,6 +75,7 @@
             flowLayoutPanel2 = new FlowLayoutPanel();
             branchCheckoutLabel = new Label();
             branchComboBox = new ComboBox();
+            mergeButton = new Button();
             activeRepoPanel = new Panel();
             activeRepositoryTextLabel = new Label();
             activeRepoLabel = new Label();
@@ -93,6 +94,7 @@
             newBranchFromCommitTextBox = new TextBox();
             createBranchFromCurrentButton = new Button();
             createBranchFromSelectedButton = new Button();
+            undoCommitButton = new Button();
             branchesTooltip = new ToolTip(components);
             branchesControlPanel.SuspendLayout();
             checkedOutBranchPanel.SuspendLayout();
@@ -115,6 +117,7 @@
             checkoutBranchButton.TabIndex = 7;
             checkoutBranchButton.Text = "Checkout To Branch";
             checkoutBranchButton.UseVisualStyleBackColor = true;
+            checkoutBranchButton.Visible = false;
             checkoutBranchButton.Click += OnCheckoutToBranchButton;
             // 
             // deleteBranchButton
@@ -128,6 +131,7 @@
             deleteBranchButton.TabIndex = 11;
             deleteBranchButton.Text = "Delete Branch";
             deleteBranchButton.UseVisualStyleBackColor = true;
+            deleteBranchButton.Visible = false;
             // 
             // branchesControlPanel
             // 
@@ -180,10 +184,10 @@
             // 
             commonBranchesButtonsPanel.Controls.Add(flowLayoutPanel2);
             commonBranchesButtonsPanel.Dock = DockStyle.Bottom;
-            commonBranchesButtonsPanel.Location = new Point(0, 500);
+            commonBranchesButtonsPanel.Location = new Point(0, 471);
             commonBranchesButtonsPanel.Name = "commonBranchesButtonsPanel";
             commonBranchesButtonsPanel.Padding = new Padding(8);
-            commonBranchesButtonsPanel.Size = new Size(278, 173);
+            commonBranchesButtonsPanel.Size = new Size(278, 202);
             commonBranchesButtonsPanel.TabIndex = 8;
             // 
             // flowLayoutPanel2
@@ -192,11 +196,12 @@
             flowLayoutPanel2.Controls.Add(branchComboBox);
             flowLayoutPanel2.Controls.Add(checkoutBranchButton);
             flowLayoutPanel2.Controls.Add(deleteBranchButton);
+            flowLayoutPanel2.Controls.Add(mergeButton);
             flowLayoutPanel2.Location = new Point(10, 12);
             flowLayoutPanel2.Margin = new Padding(4);
             flowLayoutPanel2.Name = "flowLayoutPanel2";
             flowLayoutPanel2.Padding = new Padding(4);
-            flowLayoutPanel2.Size = new Size(256, 150);
+            flowLayoutPanel2.Size = new Size(256, 187);
             flowLayoutPanel2.TabIndex = 0;
             // 
             // branchCheckoutLabel
@@ -205,9 +210,9 @@
             branchCheckoutLabel.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             branchCheckoutLabel.Location = new Point(7, 4);
             branchCheckoutLabel.Name = "branchCheckoutLabel";
-            branchCheckoutLabel.Size = new Size(127, 21);
+            branchCheckoutLabel.Size = new Size(61, 21);
             branchCheckoutLabel.TabIndex = 12;
-            branchCheckoutLabel.Text = "Branch Checkout";
+            branchCheckoutLabel.Text = "Branch:";
             // 
             // branchComboBox
             // 
@@ -218,6 +223,20 @@
             branchComboBox.Size = new Size(240, 23);
             branchComboBox.TabIndex = 10;
             branchComboBox.Text = "Branches";
+            // 
+            // mergeButton
+            // 
+            mergeButton.Dock = DockStyle.Top;
+            mergeButton.FlatStyle = FlatStyle.Flat;
+            mergeButton.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            mergeButton.Location = new Point(7, 145);
+            mergeButton.Name = "mergeButton";
+            mergeButton.Size = new Size(240, 38);
+            mergeButton.TabIndex = 13;
+            mergeButton.Text = "Merge with Branch";
+            mergeButton.UseVisualStyleBackColor = true;
+            mergeButton.Visible = false;
+            mergeButton.Click += MergeButton_Click;
             // 
             // activeRepoPanel
             // 
@@ -359,6 +378,7 @@
             flowLayoutPanel3.Controls.Add(newBranchFromCommitTextBox);
             flowLayoutPanel3.Controls.Add(createBranchFromCurrentButton);
             flowLayoutPanel3.Controls.Add(createBranchFromSelectedButton);
+            flowLayoutPanel3.Controls.Add(undoCommitButton);
             flowLayoutPanel3.Dock = DockStyle.Fill;
             flowLayoutPanel3.Location = new Point(0, 0);
             flowLayoutPanel3.Name = "flowLayoutPanel3";
@@ -427,6 +447,20 @@
             createBranchFromSelectedButton.Visible = false;
             createBranchFromSelectedButton.Click += OnCreateBranchFromSelectedButton;
             // 
+            // undoCommitButton
+            // 
+            undoCommitButton.FlatStyle = FlatStyle.Flat;
+            flowLayoutPanel3.SetFlowBreak(undoCommitButton, true);
+            undoCommitButton.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            undoCommitButton.Location = new Point(473, 113);
+            undoCommitButton.Name = "undoCommitButton";
+            undoCommitButton.Size = new Size(200, 28);
+            undoCommitButton.TabIndex = 18;
+            undoCommitButton.Text = "Undo Latest Commit";
+            undoCommitButton.UseVisualStyleBackColor = true;
+            undoCommitButton.Visible = false;
+            undoCommitButton.Click += UndoCommitButton_Click;
+            // 
             // BranchesControl
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -481,5 +515,7 @@
         private TextBox newBranchFromCommitTextBox;
         private Button createBranchFromCurrentButton;
         private Button createBranchFromSelectedButton;
+        private Button undoCommitButton;
+        private Button mergeButton;
     }
 }

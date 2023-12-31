@@ -14,10 +14,14 @@ namespace GitVisualizer.UI.UI_Forms
     {
         public static UITheme.AppTheme AppTheme = UITheme.DarkTheme;
 
-        private readonly RepositoriesControl repositoriesControl = new();
-        private readonly BranchesControl branchesControl = new();
-        private readonly MergingControl mergingControl = new();
-        private readonly SettingsForm settingsForm = new();
+        private static readonly RepositoriesControl repositoriesControl = new();
+        private static readonly BranchesControl branchesControl = new();
+        private static readonly MergingControl mergingControl = new();
+        private static readonly SettingsForm settingsForm = new();
+        public static readonly ErrorForm errorForm = new();
+
+        public static readonly string NAM_WEBSITE = "https://namdo1225.github.io/";
+        public static readonly string REPO_WEBSITE = "https://github.com/namdo1225/visualizer-github";
 
         /// <summary>
         /// The constructor for MainForm.
@@ -27,18 +31,12 @@ namespace GitVisualizer.UI.UI_Forms
             InitializeComponent();
             CheckValidation();
             rememberMeCheckbox.Checked = GVSettings.Data.RememberGitHubLogin;
-            switch (GVSettings.Data.Theme)
+            AppTheme = GVSettings.Data.Theme switch
             {
-                case "Dark":
-                    AppTheme = UITheme.DarkTheme;
-                    break;
-                case "Blue Light":
-                    AppTheme = UITheme.BlueThemeLight;
-                    break;
-                case "Blue Dark":
-                    AppTheme = UITheme.BlueThemeDark;
-                    break;
-            }
+                "Blue Light" => UITheme.BlueThemeLight,
+                "Blue Dark" => UITheme.BlueThemeDark,
+                _ => UITheme.DarkTheme,
+            };
             ApplyColorTheme(AppTheme);
         }
 
@@ -84,6 +82,15 @@ namespace GitVisualizer.UI.UI_Forms
         }
 
         /// <summary>
+        /// Opens an external website.
+        /// </summary>
+        /// <param name="siteURL">The url to open.</param>
+        public static void OpenExternalWebsite(string siteURL)
+        {
+            Process.Start(new ProcessStartInfo { FileName = siteURL, UseShellExecute = true });
+        }
+
+        /// <summary>
         /// The repositories button press handler.
         /// </summary>
         /// <param name="sender">The sender object.</param>
@@ -120,7 +127,7 @@ namespace GitVisualizer.UI.UI_Forms
         /// </summary>
         public void UpdateAppTitle()
         {
-            RepositoryLocal liveRepo = GitAPI.LiveRepository;
+            RepositoryLocal? liveRepo = GitAPI.LiveRepository;
             if (liveRepo != null)
                 TopLevelControl.Text = $"GitVisualizer - {liveRepo.Title} ({liveRepo.DirPath})";
         }
@@ -144,13 +151,9 @@ namespace GitVisualizer.UI.UI_Forms
         private void MainForm_FormClosing(Object sender, FormClosingEventArgs e)
         {
             if (GVSettings.Data.RememberGitHubLogin)
-            {
                 Github.SaveUser();
-            }
             else if (Github.AccessToken != null)
-            {
                 Github.DeleteToken();
-            }
         }
 
         /// <summary>
@@ -244,24 +247,18 @@ namespace GitVisualizer.UI.UI_Forms
             branchesControl.ApplyColorTheme(AppTheme);
             mergingControl.ApplyColorTheme(AppTheme);
             repositoriesControl.ApplyColorTheme(AppTheme);
+            errorForm.ApplyColorTheme(AppTheme);
         }
 
         /// <summary>
         /// Opens a dialog.
         /// </summary>
         /// <param name="message">The message for the dialog.</param>
-        public static void OpenDialog(String message)
+        /// <param name="command">The command for the dialog.</param>
+        public static void OpenDialog(string message, string command = "Message not produced from a command.")
         {
-            Form dialog = new();
-            Label text = new()
-            {
-                AutoSize = false,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Dock = DockStyle.Fill,
-                Text = $"Error message: {message}"
-            };
-            dialog.Controls.Add(text);
-            dialog.ShowDialog();
+            errorForm.ChangeLabel(message, command);
+            errorForm.ShowDialog();
         }
     }
 }

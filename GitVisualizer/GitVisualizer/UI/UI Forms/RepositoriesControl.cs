@@ -116,7 +116,7 @@ namespace GitVisualizer.UI.UI_Forms
         /// <param name="e">The EventArgs.</param>
         private void OnCreateNewLocalRepoButton(object sender, EventArgs e)
         {
-            GitAPI.Actions.LocalActions.CreateLocalRepository(UpdateGridCallback);
+            GitAPI.Actions.LocalActions.CreateLocalRepository();
             GitAPI.Scanning.ScanForAllRepos(UpdateGridCallback);
         }
 

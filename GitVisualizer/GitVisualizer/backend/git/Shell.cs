@@ -1,10 +1,10 @@
 using System.Management.Automation;
 using System.Collections.ObjectModel;
 using GitVisualizer.UI.UI_Forms;
+using System.Diagnostics;
 
 namespace GitVisualizer.backend.git
 {
-
     /// <summary>
     /// The class providing PowerShell functionalities.
     /// </summary>
@@ -28,7 +28,6 @@ namespace GitVisualizer.backend.git
         /// <returns>The result of the command.</returns>
         public static ShellComRes Exec(string command)
         {
-            // TODO async shell command queue
             try
             {
                 iShell.Commands.Clear();
@@ -36,19 +35,20 @@ namespace GitVisualizer.backend.git
                 Collection<PSObject> psObjects = iShell.Invoke();
                 bool success = !iShell.HadErrors;
                 string? errmsg = null;
-                if (!success)
+                if (!success && iShell.Streams.Error.Count > 0)
                 {
                     ErrorRecord err = iShell.Streams.Error[0];
                     errmsg = err.ToString();
                     iShell.Streams.Error.Clear();
-                    MainForm.OpenDialog(errmsg);
+                    MainForm.OpenDialog(errmsg, command);
                 }
-                return new ShellComRes(success, errmsg: errmsg, psObjects: psObjects);
+                return new ShellComRes(success, errmsg, psObjects);
             }
             catch (Exception e)
             {
                 string errmsg = e.ToString();
-                return new ShellComRes(success: false, errmsg: errmsg, psObjects: null);
+                MainForm.OpenDialog(errmsg, command);
+                return new ShellComRes(false, errmsg, null);
             }
         }
     }

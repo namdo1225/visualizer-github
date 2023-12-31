@@ -51,9 +51,7 @@ namespace GitVisualizer.backend
                 Data = new GVSettingsData();
             }
             else
-            {
                 Data = nullableData;
-            }
         }
 
         /// <summary>
@@ -72,7 +70,6 @@ namespace GitVisualizer.backend
         /// </summary>
         public class GVSettingsData
         {
-
             /// <summary>
             /// Gets or Sets the remember git hub login indicator.
             /// </summary>

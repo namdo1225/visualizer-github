@@ -30,11 +30,11 @@ public static class GitAPI
     public static RepositoryLocal? LiveRepository { get; private set; }
 
     // url -> remoteRepo
-    private static Dictionary<string, RepositoryRemote> remoteRepositories;
+    private static readonly Dictionary<string, RepositoryRemote> remoteRepositories;
     // dirPath -> localRepo;
-    private static Dictionary<string, RepositoryLocal> localRepositories;
+    private static readonly Dictionary<string, RepositoryLocal> localRepositories;
     // url -> list<localRepo>
-    private static Dictionary<string, HashSet<RepositoryLocal>> remoteBackedLocalRepositories;
+    private static readonly Dictionary<string, HashSet<RepositoryLocal>> remoteBackedLocalRepositories;
 
     /// <summary>
     /// Gets or Sets the number of commits ahead.
@@ -184,7 +184,7 @@ public static class GitAPI
             /// <param name="callback">The callback.</param>
             public static async void CreateRemoteRepository(RepositoryLocal localRepo, Action callback)
             {
-                string cloneURL = await Github.CreateRepo(localRepo.Title);
+                string? cloneURL = await Github.CreateRepo(localRepo.Title);
                 if (cloneURL == null)
                     return;
 
@@ -316,10 +316,8 @@ public static class GitAPI
             {
                 if (!ReferenceEquals(commit, LiveCommit))
                 {
-                    // TODO check that commit exists
                     string com = $"cd '{commit?.LocalRepository?.DirPath}'; git checkout {commit?.LongCommitHash}";
-                    ShellComRes result = Shell.Exec(com);
-                    // TODO check for command success
+                    Shell.Exec(com);
                     LiveCommit = commit;
                     LiveBranch = null;
                 }
@@ -351,11 +349,9 @@ public static class GitAPI
             /// <returns>The result.</returns>
             public static Branch CreateLocalBranch(string title, Commit commit)
             {
-                // TODO check that branch does not exist
                 string com = $"cd '{commit?.LocalRepository?.DirPath}'; git checkout -b {title} {commit?.LongCommitHash}";
                 Shell.Exec(com);
                 Branch branch = new(title, commit);
-                // TODO add new branch to global branch
                 LiveCommit = branch.Commit;
                 return branch;
             }
@@ -368,10 +364,8 @@ public static class GitAPI
             {
                 if (!ReferenceEquals(branch.Commit, LiveCommit))
                 {
-                    // TODO check that branch exists and points to a valid commit
                     string com = $"cd '{branch?.Commit?.LocalRepository?.DirPath}'; git branch -D {branch?.Title}";
                     Shell.Exec(com);
-                    // TODO check for command success
                     com = $"cd '{branch?.Commit?.LocalRepository?.DirPath}'; git push origin -d {branch?.Title}";
                     Shell.Exec(com);
                 }
@@ -380,9 +374,13 @@ public static class GitAPI
             /// <summary>
             /// Merge local branch.
             /// </summary>
-            public static void Merge()
+            public static void Merge(string branch)
             {
-
+                if (LiveRepository != null)
+                {
+                    string com = $"cd '{LiveRepository.DirPath}'; git merge {branch}";
+                    Shell.Exec(com);
+                }
             }
 
             /// <summary>
@@ -455,8 +453,7 @@ public static class GitAPI
             /// <summary>
             /// Creates a local repository.
             /// </summary>
-            /// <param name="callback">The Action callback.</param>
-            public static void CreateLocalRepository(Action? callback)
+            public static void CreateLocalRepository()
             {
                 // TODO check that .git folder and repo exist
                 FolderBrowserDialog dialog = new();
@@ -586,6 +583,11 @@ public static class GitAPI
             /// </summary>
             public static void UndoLastCommit()
             {
+                if (LiveRepository != null)
+                {
+                    string com = $"cd '{LiveRepository.DirPath}'; git reset --soft HEAD~1";
+                    Shell.Exec(com);
+                }
             }
 
             /// <summary>
@@ -719,8 +721,6 @@ public static class GitAPI
             return new();
         }
 
-        public readonly static string description_getRemoteRepositories = "";
-
         /// <summary>
         /// Gets remote repositories.
         /// </summary>
@@ -730,9 +730,6 @@ public static class GitAPI
             return remoteRepositories.Values.ToList();
         }
 
-
-        public readonly static string description_getLocalRepositories = "";
-
         /// <summary>
         /// Gets local repositories.
         /// </summary>
@@ -741,8 +738,6 @@ public static class GitAPI
         {
             return localRepositories.Values.ToList();
         }
-
-        public readonly static string description_getAllRepositories = "";
 
         /// <summary>
         /// Gets all repositories.
@@ -842,18 +837,14 @@ public static class GitAPI
         /// </summary>
         public static void SetCommitsAheadAndBehind()
         {
-            if (LiveRepository != null)
-            {
-                if (LiveBranch != null)
-                {
-                    string com = $"cd '{LiveRepository.DirPath}'; git rev-list --left-right --count {LiveBranch.Title}...origin/{LiveBranch.Title}";
+            if (LiveRepository != null && LiveBranch != null) {
+                    string com = $"cd '{LiveRepository.DirPath}'; git rev-list --left-right --count ";
+                    com += (LiveRepository.GetRemoteURL() != null) ?
+                            $"{LiveBranch.Title}...origin/{LiveBranch.Title}" :
+                            $"{LiveBranch.Title}...{LiveBranch.Title}";
+
                     ShellComRes result = Shell.Exec(com);
-                    if (result.PsObjects == null)
-                    {
-                        CommitsAhead = CommitsBehind = null;
-                        return;
-                    }
-                    if (result.PsObjects.Count == 0)
+                    if (result.PsObjects == null || result.PsObjects.Count == 0)
                     {
                         CommitsAhead = CommitsBehind = null;
                         return;
@@ -863,9 +854,6 @@ public static class GitAPI
                     string[] nums = line.Split(" ");
                     CommitsBehind = int.Parse(nums[1]);
                     CommitsAhead = int.Parse(nums[0]);
-                }
-                else
-                    CommitsAhead = CommitsBehind = null;
             }
             else
                 CommitsAhead = CommitsBehind = null;
@@ -922,7 +910,6 @@ public static class GitAPI
             if (LiveRepository != null)
             {
                 string baseCom = $"cd '{LiveRepository.DirPath}'; ";
-
                 // Commit hash (H)
                 // Abbreviated commit hash (h)
                 // Tree hash (T)
@@ -936,12 +923,10 @@ public static class GitAPI
                 Dictionary<string, Commit> shortHashToCommitDict = new();
                 List<Commit> commits = new();
                 string delim = " | ";
-                string com = baseCom + $"git log --all --oneline --pretty=format:\"%H{delim}%h{delim}%T{delim}%P\"";
+                string com = baseCom + $"cd '{LiveRepository.DirPath}'; git log --all --oneline --pretty=format:\"%H{delim}%h{delim}%T{delim}%P\"";
                 ShellComRes comResult = Shell.Exec(com);
                 if (comResult.PsObjects == null)
-                {
                     return new(new(), new());
-                }
 
                 // longCommitHash, shortCommitHash, longTreeHash, parentHashes
                 foreach (PSObject pso in comResult.PsObjects)
@@ -960,23 +945,15 @@ public static class GitAPI
                     };
 
                     if (cols.Length > 3)
-                    {
                         foreach (string parentHash in cols[3].Split(" "))
-                        {
                             commit.ParentHashes.Add(parentHash.Trim());
-                        }
-                    }
+
                     longHashToCommitDict[commit.LongCommitHash] = commit;
                     shortHashToCommitDict[commit.ShortCommitHash] = commit;
                     commits.Add(commit);
 
-                    if (liveCommitShortHash != null)
-                    {
-                        if (commit.ShortCommitHash == liveCommitShortHash)
-                        {
-                            LiveCommit = commit;
-                        }
-                    }
+                    if (liveCommitShortHash != null && commit.ShortCommitHash == liveCommitShortHash)
+                        LiveCommit = commit;
                 }
 
                 // committer name
@@ -1059,11 +1036,6 @@ public static class GitAPI
                 {
                     Commit initCommit = commits.Last();
                     PopulateCommitGraphData(initCommit, 0);
-                    // printing graph
-                    foreach (Commit c in commits)
-                    {
-                        string leftOffset = string.Concat(Enumerable.Repeat("  ", c.graphColIndex));
-                    }
                 }
 
                 // getting all branches
@@ -1079,11 +1051,11 @@ public static class GitAPI
                 foreach (PSObject pso in comResult.PsObjects)
                 {
                     string line = pso.ToString().TrimEnd();
-                    line = System.Text.RegularExpressions.Regex.Replace(line, @"\s+", " ");
+                    line = Regex.Replace(line, @"\s+", " ");
                     string[] items = line.Split(" ");
-                    bool live = items[0].Equals("*");
                     string title = items[1];
                     string shortCommitHash = items[2];
+
                     // setting branhc-commit refs
                     if (shortHashToCommitDict.ContainsKey(shortCommitHash))
                     {
@@ -1092,13 +1064,8 @@ public static class GitAPI
                         commit.Branches.Add(branch);
                         allBranches.Add(branch);
 
-                        if (liveCommitShortHash != null && liveBranchName != null)
-                        {
-                            if (liveCommitShortHash == shortCommitHash && liveBranchName == branch.Title)
-                            {
-                                LiveBranch = branch;
-                            }
-                        }
+                        if (liveCommitShortHash != null && liveBranchName != null && liveCommitShortHash == shortCommitHash && liveBranchName == branch.Title)
+                            LiveBranch = branch;
                     }
                 }
 

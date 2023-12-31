@@ -4,9 +4,7 @@ using SkiaSharp;
 namespace GitVisualizer
 {
     /// <summary>
-    /// Setup page Designer code for app, which handles logging into Github, granting user codes, and linking to Github site
-    /// before allowing manipulation of Repos. Stores all components for the window form, and includes functionality for
-    /// directly modifying page components such as color theme.
+    /// Setting pages for the app with various functionalities to adjust the app itself in some way.
     /// </summary>
     partial class SettingsForm
     {
@@ -411,7 +409,9 @@ namespace GitVisualizer
         }
 
         #endregion
+        #pragma warning disable Commentor // Missing comments.
         private void ApplyColorTheme(UITheme.AppTheme theme)
+        #pragma warning restore Commentor // Missing comments.
         {
             BackColor = theme.AppBackground;
             ForeColor = theme.TextSoft;
@@ -434,7 +434,6 @@ namespace GitVisualizer
             }
         }
         private NotifyIcon notifyIcon1;
-        private CheckBox repoTypeButton;
         private CheckBox rememberMeCheckbox;
         private Label label3;
         private ComboBox themeCombo;

@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Diagnostics;
 using System.Net.Http.Headers;
 
 using CredentialManagement;
@@ -349,7 +348,7 @@ namespace GithubSpace
 
             while (await timer.WaitForNextTickAsync() && finalRetries > 0)
             {
-                string status = await SendAuthorizationRequest();
+                string? status = await SendAuthorizationRequest();
                 if (status != null || status == "denied")
                     break;
                 finalRetries--;
@@ -606,7 +605,7 @@ namespace GithubSpace
 
             try
             {
-                response = sharedClient.Send(request);
+                response = await sharedClient.SendAsync(request);
             }
             catch (Exception)
             {

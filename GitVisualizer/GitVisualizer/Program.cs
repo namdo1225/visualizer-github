@@ -6,6 +6,10 @@ using GitVisualizer.backend;
 
 namespace GitVisualizer
 {
+
+    /// <summary>
+    /// The program class to start the main program.
+    /// </summary>
     internal static class Program
     {
         

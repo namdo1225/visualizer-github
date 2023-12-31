@@ -27,6 +27,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Update="UI\UI Forms\ErrorForm.cs" />
     <Compile Update="UI\UI Forms\SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
