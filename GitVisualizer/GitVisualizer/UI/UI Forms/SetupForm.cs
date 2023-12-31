@@ -70,7 +70,9 @@ namespace GitVisualizer
         private async void GetPermissionGithub()
         {
             authorizationPanel.Visible = true;
+
             string? userCode = await Github.GivePermission(repoTypeButton.Checked ? "private" : "public", grantDeleteRepo.Checked);
+
             if (userCode != null)
             {
                 userCodeLabel.Text = "****-****";

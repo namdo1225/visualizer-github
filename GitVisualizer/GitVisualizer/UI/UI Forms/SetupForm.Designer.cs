@@ -203,9 +203,8 @@ namespace GitVisualizer
             userCodeLabel.Name = "userCodeLabel";
             userCodeLabel.Size = new Size(343, 86);
             userCodeLabel.TabIndex = 10;
-            userCodeLabel.Text = "1234-5678";
+            userCodeLabel.Text = "****-****";
             userCodeLabel.TextAlign = ContentAlignment.MiddleCenter;
-            userCodeLabel.Visible = false;
             // 
             // rememberMeCheckbox
             // 
