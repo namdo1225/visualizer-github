@@ -178,6 +178,7 @@ namespace GitVisualizer
             button3.TabIndex = 13;
             button3.Text = "Instructions";
             button3.UseVisualStyleBackColor = true;
+            button3.Click += InstructionButton_Click;
             // 
             // deleteCredButton
             // 

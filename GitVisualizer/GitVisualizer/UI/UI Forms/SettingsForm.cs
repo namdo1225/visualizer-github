@@ -14,7 +14,8 @@ namespace GitVisualizer
     /// </summary>
     public partial class SettingsForm : Form
     {
-        private readonly string AUTH_WEBSITE = "https://github.com/settings/applications";
+        private static readonly string AUTH_WEBSITE = "https://github.com/settings/applications";
+        private static readonly string INSTRUCTION_WEBSITE = "https://namdo1225.github.io/projects_description/20231230_visualizer-github.html";
 
         /// <summary>
         /// The SettingsForm constructor
@@ -44,6 +45,16 @@ namespace GitVisualizer
         private void AppRepoButton_Click(object sender, EventArgs e)
         {
             MainForm.OpenExternalWebsite(MainForm.REPO_WEBSITE);
+        }
+
+        /// <summary>
+        /// Opens the app's instruction.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="e">The EventArgs.</param>
+        private void InstructionButton_Click(object sender, EventArgs e)
+        {
+            MainForm.OpenExternalWebsite(INSTRUCTION_WEBSITE);
         }
 
         /// <summary>
