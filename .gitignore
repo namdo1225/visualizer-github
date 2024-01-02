@@ -400,3 +400,7 @@ FodyWeavers.xsd
 
 # Ignore personal app configuration settings
 **/GitVisualizer.settings.json
+
+# Ignore testcase output files
+GitVisualizer/Test/CoverageHistory
+GitVisualizer/Test/coveragereport
