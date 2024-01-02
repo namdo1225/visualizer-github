@@ -1,4 +1,4 @@
-# CSC436 - Git Visualizer
+# Git Visualizer
 * For a 4-member group project, we created a Windows program that can abstract many Git commands and provide a visual interface for these functionalities. The app can also interact with the GitHub API, allowing you to interact with remote repositories on your GitHub page.
 
 ## Developers
