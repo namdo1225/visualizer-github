@@ -38,27 +38,27 @@
 
 ## Instructions to use
 1. If you want to work with your remote repositories on GitHub, login with GitHub. Otherwise, you can use the local workspace.
-![Login picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer/00_setup.png)
+![Login picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/00_setup.png)
 
 2. A side panel should pop up. You should be presented with a user code. This is important. Enter that code in the browser that popped up.
-![Showing code picture 1](https://namdo1225.github.io/images/projects_media/20231230_visualizer/01_code.png)
-![Showing code picture 2](https://namdo1225.github.io/images/projects_media/20231230_visualizer/02_code.png)
+![Showing code picture 1](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/01_code.png)
+![Showing code picture 2](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/02_code.png)
 
 3. Accept the permission once you have entered the user code. You should now be able to see your repositories.
-![Accept the permission picture 1](https://namdo1225.github.io/images/projects_media/20231230_visualizer/03_agree.png)
-![Accept the permission picture 2](https://namdo1225.github.io/images/projects_media/20231230_visualizer/04_congrats.png)
+![Accept the permission picture 1](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/03_agree.png)
+![Accept the permission picture 2](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/04_congrats.png)
 
 4. You can create new repositories, clone remote repositories, and even track directories that contain your local repositories.
-![Repositories management picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer/05_repo.png)
+![Repositories management picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/05_repo.png)
 
 5. You can go to the “Branches” tab and view your repository’s branches.
-![Branches management picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer/06_branch.png)
+![Branches management picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/06_branch.png)
 
 6. You can go to the “Changes” tab, stage or unstage, and commit any changes you have made to your projects.
-![Staging and committing tab picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer/07_changes.png)
+![Staging and committing tab picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/07_changes.png)
 
 7. If you have committed the changes, they should be reflected back in the “Branches” tab.
-![Committing a change and reflecting it in branch tab picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer/08_committed.png)
+![Committing a change and reflecting it in branch tab picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/08_committed.png)
 
 8. You could click on the “Settings” tab to change some configurations and get more information about the app.
-![Settings tab to adjust app's configuration picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer/09_settings.png)
+![Settings tab to adjust app's configuration picture](https://namdo1225.github.io/images/projects_media/20231230_visualizer-github/09_settings.png)
