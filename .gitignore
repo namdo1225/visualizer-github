@@ -402,5 +402,5 @@ FodyWeavers.xsd
 **/GitVisualizer.settings.json
 
 # Ignore testcase output files
-CoverageHistory/
-coveragereport/
+**/CoverageHistory/
+**/coveragereport/
